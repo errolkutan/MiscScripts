@@ -139,6 +139,7 @@ def getRowDataForGroup(group):
 
 
 def getRowDataForCluster(cluster, group, automationConfig=None):
+    logging.debug("Getting data for cluster " + cluster["clusterName"])
     if automationConfig is None:
         automationConfig = opsMgrConnector.getAutomationConfig(cluster["groupId"])
     processes = getProcessesForCluster(cluster, automationConfig)
@@ -148,7 +149,6 @@ def getRowDataForCluster(cluster, group, automationConfig=None):
         rowData.extend(getRowDataForProcess(cluster, group, process, automationConfig))
 
     return rowData
-
 
 def getRowDataForProcess(cluster, group, process, automationConfig):
     """
@@ -181,13 +181,16 @@ def getRowDataForProcess(cluster, group, process, automationConfig):
         pageNum += 1
         dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum)
 
+    # TODO -- need to add for sharded cluster
+    clusterName = cluster["replicaSetName"] if "replicaSetName" in cluster else cluster["clusterName"]
+
     # Create Row Data
     rows = []
     for db in dbsSeen:
         rowData = RowData()
         rowData.setProjectName(group["name"])
         rowData.setProjectId(cluster["groupId"])
-        rowData.setClusterName(cluster["clusterName"])
+        rowData.setClusterName(clusterName)
         rowData.setClusterHost(process["hostname"])
         rowData.setMDBVersion(process["version"])
 
@@ -211,14 +214,17 @@ def getProcessesForCluster(cluster, automationConfig=None):
     :param automationConfig:
     :return:
     """
+    logging.debug("Getting processes for cluster with name " + cluster["clusterName"])
     processes = []
 
+
     replicaSetFound = False
-    for replicaSet in automationConfig["replicaSets"]:
-        if replicaSet["_id"] == cluster["clusterName"]:
-            replicaSetFound = True
-            members = [ member["host"] for member in replicaSet["members"] ]
-            processes = [ process for process in automationConfig["processes"] if process["name"] in members]
+    if "replicaSetName" in cluster:
+        for replicaSet in automationConfig["replicaSets"]:
+            if replicaSet["_id"] == cluster["replicaSetName"]:
+                replicaSetFound = True
+                members = [ member["host"] for member in replicaSet["members"] ]
+                processes = [ process for process in automationConfig["processes"] if process["name"] in members]
 
     # TODO -- finish this for sharding
     # if not replicaSetFound:
@@ -270,7 +276,7 @@ def _configureLogger(logLevel):
     format = '%(message)s'
     if logLevel != 'INFO':
         format = '%(levelname)s: %(message)s'
-    logging.basicConfig(format=format, level=logLevel.upper())
+    logging.basicConfig(format=format, level=logLevel.upper(), filename="debug.log")
 
 def gitVersion():
     """
