@@ -83,8 +83,8 @@ def shouldSkipOpsMgrProject(scriptConfig, groupData):
         return False
 
     # If no configs are set, never skip this data point
-    if  (scriptConfig["projectId"] is not None) and (scriptConfig["projectName"] is not None) and \
-        (scriptConfig["projectAppName"] is not None) and (scriptConfig["projectAppEnv"] is not None):
+    if  (scriptConfig["projectId"] is None) and (scriptConfig["projectName"] is None) and \
+        (scriptConfig["projectAppName"] is None) and (scriptConfig["projectAppEnv"] is None):
         return False
     return True
 
