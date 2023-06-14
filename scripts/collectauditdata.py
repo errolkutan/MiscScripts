@@ -43,7 +43,7 @@ def collectAuditData(config):
 
         rowData.extend(getRowDataForGroup(group))
 
-    header = "Project Name, Project Id, Cluster Name, Host, MDB Version, Database, Status, Open Mode"
+    header = "Host, Cluster Name, MDB Version, Database, Status, Open Mode"
     rowDataStr = ""
     for row in rowData:
         rowDataStr += "\n" + row
@@ -118,9 +118,7 @@ class RowData():
         self.openMode = openMode
 
     def getRowStr(self):
-        return "{},{},{},{},{},{},{},{}".format(self.name, self.projectId, self.clusterName, self.clusterHost,
-                                                self.version, self.dbName, self.status, self.openMode)
-
+        return "{},{},{},{},{},{}".format(self.clusterHost, self.clusterName, self.version, self.dbName, self.status, self.openMode)
 
 
 def getRowDataForGroup(group):
@@ -234,6 +232,17 @@ def getProcessesForCluster(cluster, automationConfig=None):
     return processes
 
 
+def writeDataToFile(fileName, data):
+    """
+    Write Data To File
+
+    :return:
+    """
+    logging.info("Writing data to file with name " + fileName)
+    with open(fileName, "w") as file:
+        file.write(data)
+        file.close()
+
 ########################################################################################################################
 # Base Methods
 ########################################################################################################################
@@ -267,7 +276,8 @@ def setupArgs():
     parser.add_argument('--projectAppName',           required=False, action="store", dest='projectAppName',    default=None,                help='The Application pneumonic.')
     parser.add_argument('--projectAppEnv',            required=False, action="store", dest='projectAppEnv',     default=None,                help='The application environment. One of ' + APPLICATION_ENVS.__str__() )
 
-    parser.add_argument('--loglevel',                   required=False, action="store", dest='logLevel',                default='info',                 help='Log level. Possible values are [none, info, verbose]')
+    parser.add_argument('--fileName',                 required=False, action="store", dest='fileName',          default=None,                 help='Path of the file to write to; if not used, will write to standard out')
+    parser.add_argument('--loglevel',                 required=False, action="store", dest='logLevel',                default='info',                 help='Log level. Possible values are [none, info, verbose]')
 
     # TODO Command line arg for update/refresh
     return parser.parse_args()
@@ -339,7 +349,11 @@ def main():
         "projectName" : args.projectName
     }
     auditData = collectAuditData(config)
-    print(auditData)
+
+    if args.fileName is None:
+        print(auditData)
+    else:
+        writeDataToFile(args.fileName, auditData)
 
 
 #-------------------------------
