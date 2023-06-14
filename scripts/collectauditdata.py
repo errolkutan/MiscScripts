@@ -179,6 +179,8 @@ def getRowDataForProcess(cluster, group, process, automationConfig):
         pageNum += 1
         dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum)
 
+    dbsSeen.add("admin")
+
     # TODO -- need to add for sharded cluster
     clusterName = cluster["replicaSetName"] if "replicaSetName" in cluster else cluster["clusterName"]
 
