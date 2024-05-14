@@ -218,20 +218,19 @@ def setPassword(projectId, userName, dbName, newPass):
 
     # Get the existing user
     userFound = False
-    automationConfig = opsMgrConnector.getAutomationConfig(projectId)
+    automationConfig = opsMgrConnector.getAutomationConfig(projectId, verifyBool=False)
     auth = automationConfig["auth"]
     for user in auth["usersWanted"]:
         if userName == user["user"] and dbName == user["db"]:
             logging.info("Changing user {} by modifying password".format(json.dumps(user, indent=4)))
             user["initPwd"] = newPass
-            user["roles"].append({"db" : "admin", "role" : "root" })
             userFound = True
             break
 
     if not userFound:
         logging.info("Could not find user with username {} and db {}".format(userName, dbName))
     else:
-        resp = opsMgrConnector.putAutomationConfig(projectId, automationConfig)
+        resp = opsMgrConnector.putAutomationConfig(projectId, automationConfig, verifyBool=False)
         logging.info("Got response: {}".format(json.dumps(resp, indent=4)))
 
         # TODO -- wait until automation complete
