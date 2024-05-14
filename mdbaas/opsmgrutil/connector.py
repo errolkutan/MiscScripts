@@ -206,7 +206,7 @@ class OpsMgrConnector:
         """
         return self.get("{}/groups/{}/automationConfig".format(self.apiURL, groupId))
 
-    def putAutomationConfig(self, groupId, newAutomationConfig):
+    def putAutomationConfig(self, groupId, newAutomationConfig, verifyBool=True):
         """
         Put Automation Configuration
 
