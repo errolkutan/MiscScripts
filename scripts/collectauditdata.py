@@ -9,7 +9,7 @@ import argparse
 import json
 
 
-from opsmgrutil import OpsMgrConnector
+from mdbaas.opsmgrutil import OpsMgrConnector
 
 # Script metadata
 version         = "1.0.0"
