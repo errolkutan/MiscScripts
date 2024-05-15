@@ -42,7 +42,7 @@ class OpsMgrConnector:
     # Base HTTP Request Methods
     ############################################################################
 
-    def post(self, url, payload):
+    def post(self, url, payload, verifyBool=True):
         """
         Post
 
@@ -54,14 +54,14 @@ class OpsMgrConnector:
         :return:            The response from the request
         """
         logging.debug("Sending a POST request to {} with payload:\n {}".format(url, self.prettyPrint(payload)))
-        result = requests.post(url, json=payload, auth=self.auth).json()
+        result = requests.post(url, json=payload, auth=self.auth, verify=verifyBool).json()
         if "error" in result:
             logging.debug("Encountered an error: {} ".format(self.prettyPrint(result)))  #TODO more sophisticated error handling
         else:
             logging.debug("Received response: {}".format(self.prettyPrint(result)))
         return result
 
-    def put(self, url, payload):
+    def put(self, url, payload, verifyBool=True):
         """
         Put
 
@@ -73,7 +73,7 @@ class OpsMgrConnector:
         :return:            The response from the request
         """
         logging.debug("Sending a PUT request to {} with payload:\n {}".format(url, self.prettyPrint(payload)))
-        result = requests.put(url, json=payload, auth=self.auth)
+        result = requests.put(url, json=payload, auth=self.auth, verify=verifyBool)
         result = result.json()
         if "error" in result:
             logging.debug("Encountered an error {}: ".format(self.prettyPrint(result)))  #TODO more sophisticated error handling
@@ -81,7 +81,7 @@ class OpsMgrConnector:
             logging.debug("Received response: {}".format(self.prettyPrint(result)))
         return result
 
-    def patch(self, url, payload):
+    def patch(self, url, payload, verifyBool=True):
         """
         Patch
 
@@ -93,14 +93,14 @@ class OpsMgrConnector:
         :return:            The response from the request
         """
         logging.debug("Sending a PATCH request to {} with payload:\n {}".format(url, self.prettyPrint(payload)))
-        result = requests.patch(url, json=payload, auth=self.auth).json()
+        result = requests.patch(url, json=payload, auth=self.auth, verify=verifyBool).json()
         if "error" in result:
             logging.debug("Encountered an error: {}".format(self.prettyPrint(result)))  #TODO more sophisticated error handling
         else:
             logging.debug("Received response: {}".format(json.dumps(result)))
         return result
 
-    def get(self, url, verifyBool=False):
+    def get(self, url, verifyBool=True):
         """
         Get
 
@@ -118,7 +118,7 @@ class OpsMgrConnector:
             logging.debug("Received response: {}".format(self.prettyPrint(result)))
         return result
 
-    def delete(self, url):
+    def delete(self, url, verifyBool=True):
         """
         Delete
 
@@ -129,7 +129,7 @@ class OpsMgrConnector:
         :return:            The response from the request
         """
         logging.debug("Sending a DELETE request to {}".format(url))
-        result = requests.delete(url, auth=self.auth)
+        result = requests.delete(url, auth=self.auth, verify=verifyBool)
         if result.status_code == 204:
             return result
         result = result.json()
@@ -191,7 +191,7 @@ class OpsMgrConnector:
     # Automation Config Methods
     ############################################################################
 
-    def getAutomationConfig(self, groupId):
+    def getAutomationConfig(self, groupId, verifyBool=True):
         """
         Get Automation Config
 
@@ -204,7 +204,7 @@ class OpsMgrConnector:
 
         :return:           The response from the request
         """
-        return self.get("{}/groups/{}/automationConfig".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}/automationConfig".format(self.apiURL, groupId), verifyBool)
 
     def putAutomationConfig(self, groupId, newAutomationConfig, verifyBool=True):
         """
@@ -219,9 +219,9 @@ class OpsMgrConnector:
 
         :return:                        The response from the request
         """
-        return self.put("{}/groups/{}/automationConfig".format(self.apiURL, groupId), newAutomationConfig)
+        return self.put("{}/groups/{}/automationConfig".format(self.apiURL, groupId), newAutomationConfig, verifyBool)
 
-    def getAutomationStatus(self, groupId):
+    def getAutomationStatus(self, groupId, verifyBool=True):
         """
         Get Automation Status
 
@@ -233,7 +233,7 @@ class OpsMgrConnector:
 
         :return:                        The response from the request
         """
-        return self.get("{}/groups/{}/automationStatus".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}/automationStatus".format(self.apiURL, groupId), verifyBool)
 
     ############################################################################
     # Organization Methods
