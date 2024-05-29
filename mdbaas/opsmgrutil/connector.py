@@ -265,7 +265,7 @@ class OpsMgrConnector:
         """
         return self.get("{}/orgs/{}".format(self.apiURL, orgId))
 
-    def getGroupsWithinOrganization(self, orgId):
+    def getGroupsWithinOrganization(self, orgId, verify=False):
         """
         Get Groups Within an Organization
 
@@ -278,7 +278,7 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/orgs/{}/groups".format(self.apiURL, orgId))
+        return self.get("{}/orgs/{}/groups".format(self.apiURL, orgId), verifyBool=verify)
 
     def getUsersWithinOrganization(self, orgId):
         """
