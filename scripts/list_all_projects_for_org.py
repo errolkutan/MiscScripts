@@ -36,7 +36,7 @@ def listProjectsForOrg(orgId):
     table = PrettyTable()
     table.field_names = [ "Project Name", "Project Id" ]
 
-    groups = opsMgrConnector.getGroupsWithinOrganization(orgId)
+    groups = opsMgrConnector.getGroupsWithinOrganization(orgId, verify=False)
     for project in groups["results"]:
         table.add_row([
             project["name"],
