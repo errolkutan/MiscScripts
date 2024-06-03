@@ -875,7 +875,7 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.delete("{}/groups{}".format(self.apiURL, groupId))
+        return self.delete("{}/groups/{}".format(self.apiURL, groupId))
 
     ############################################################################
     # API Keys
