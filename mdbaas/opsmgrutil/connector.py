@@ -280,15 +280,32 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
+        queryStr = "{}/orgs/{}/groups".format(self.apiURL, orgId)
+        if pageNum is not None:
+            queryStr += "?pageNum={}".format(pageNum)
+        if itemsPerPage is not None:
+            if pageNum is not None:
+                queryStr += "&itemsPerPage={}".format(itemsPerPage)
+            else:
+                queryStr += "?itemsPerPage={}".format(itemsPerPage)
+        return self.get(queryStr, verifyBool=verify)
 
-        data = self.get("{}/orgs/{}/groups".format(self.apiURL, orgId), verifyBool=verify)
+    def getAllGroupsWithinOrg(self, orgId, verify=False):
+        """
+        Get All Groups Within Org
+
+        :param orgId:
+        :param verify:
+        :return:
+        """
+        data = self.getGroupsWithinOrganization(orgId, verify=verify)
         totalCount = data["totalCount"]
         numPages = int(math.ceil(float(totalCount) / float(GROUPS_PER_PAGE)))
 
         doc = {}
         doc["results"] = []
         for i in range(1, numPages + 1):
-            groupDoc = self.getGroups(pageNum=i)
+            groupDoc = self.getGroupsWithinOrganization(orgId, pageNum=i, itemsPerPage=GROUPS_PER_PAGE, verify=verify)
             doc["results"].extend(groupDoc["results"])
 
         return doc
@@ -699,7 +716,10 @@ class OpsMgrConnector:
         if pageNum is not None:
             queryStr += "?pageNum={}".format(pageNum)
         if itemsPerPage is not None:
-            queryStr += "?itemsPerPage={}".format(itemsPerPage)
+            if pageNum is not None:
+                queryStr += "&itemsPerPage={}".format(itemsPerPage)
+            else:
+                queryStr += "?itemsPerPage={}".format(itemsPerPage)
         return self.get(queryStr)
 
     def getGroupById(self, groupId):
