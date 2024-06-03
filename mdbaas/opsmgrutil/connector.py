@@ -265,7 +265,9 @@ class OpsMgrConnector:
         """
         return self.get("{}/orgs/{}".format(self.apiURL, orgId))
 
-    def getGroupsWithinOrganization(self, orgId, verify=False):
+
+
+    def getGroupsWithinOrganization(self, orgId, pageNum=None, itemsPerPage=None, verify=False):
         """
         Get Groups Within an Organization
 
@@ -278,7 +280,18 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/orgs/{}/groups".format(self.apiURL, orgId), verifyBool=verify)
+
+        data = self.get("{}/orgs/{}/groups".format(self.apiURL, orgId), verifyBool=verify)
+        totalCount = data["totalCount"]
+        numPages = int(math.ceil(float(totalCount) / float(GROUPS_PER_PAGE)))
+
+        doc = {}
+        doc["results"] = []
+        for i in range(1, numPages + 1):
+            groupDoc = self.getGroups(pageNum=i)
+            doc["results"].extend(groupDoc["results"])
+
+        return doc
 
     def getUsersWithinOrganization(self, orgId):
         """
