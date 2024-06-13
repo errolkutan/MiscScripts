@@ -501,7 +501,8 @@ class OpsMgrConnector:
                                                                                              hostId, diskPartitionName, granularity,
                                                                                              period))
 
-    def getDiskPartitionMeasurementOverPeriodForHost(self, groupId, hostId, diskPartitionName, measurementTypes, granularity, period):
+    def getDiskPartitionMeasurementOverPeriodForHost(self, groupId, hostId, diskPartitionName, granularity, period,
+                                                     measurementTypes=None):
         """
         Get Disk Partition Measurement Over Period For Host
 
@@ -514,14 +515,22 @@ class OpsMgrConnector:
         :param diskPartitionName:
         :return:
         """
+        if measurementTypes is None:
+            return self.get(
+                "{}/groups/{}/hosts/{}/disks/{}/measurements?granularity={}&period={}".format(self.apiURL, groupId,
+                                                                                              hostId,
+                                                                                              diskPartitionName,
+                                                                                              granularity,
+                                                                                              period))
         measurementTypeStr = ""
         for measurementType in measurementTypes:
             measurementTypeStr += "m={}&".format(measurementType)
         return self.get(
             "{}/groups/{}/hosts/{}/disks/{}/measurements?{}granularity={}&period={}".format(self.apiURL, groupId,
-                                                                                          hostId, diskPartitionName,
-                                                                                            measurementTypeStr, granularity,
-                                                                                          period))
+                                                                                            hostId, diskPartitionName,
+                                                                                            measurementTypeStr,
+                                                                                            granularity,
+                                                                                            period))
 
     def getDiskPartitionName(self, groupId, hostId):
         """

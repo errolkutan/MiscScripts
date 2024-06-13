@@ -66,7 +66,7 @@ def deleteProjectsInOrg(orgId, numProjects, startProjNum=0):
     groupsInOrg = opsMgrConnector.getGroupsWithinOrganization(orgId)
     for group in groupsInOrg["results"]:
         if group["name"] in projectsToDelete:
-            opsMgrConnector.removeGroup(group["id"])
+            resp = opsMgrConnector.removeGroup(group["id"])
             logging.info("Deleting group with name {} and id {}".format(group["name"], group["id"]))
 
     logging.info("Done")
