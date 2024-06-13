@@ -38,3 +38,4 @@ six==1.15.0
 subprocess32==3.5.4
 urllib3==1.25.11
 numpy
+python-dateutil

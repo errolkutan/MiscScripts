@@ -146,55 +146,9 @@ def getGroupIdForHost(hostName):
         shortHostName
     ]
     groupId = None
-    if mongohub is not None:
-        groupId = findGroupIdForHostInMongoHub(shortHostName)
     if groupId is None:
         groupId = findGroupIdForHostDataInOpsManager(hostnames)
     return groupId
-
-def findGroupIdForHostInMongoHub(hostName):
-    """
-    Find Host Data in MongoHub
-
-    :param hostName:
-    :return:
-    """
-    logging.debug("Finding group id for host with name {} in MongoHub".format(hostName))
-
-    query = {"deployments.instances.serverDocument.name": hostName}
-    matchStage = { "$match" : query }
-
-    unwindDeploymentStage = {
-        "$unwind" : {
-            "path" : "$deployments"
-        }
-    }
-
-    unwindInstancesStage = {
-        "$unwind" : {
-            "path" : "$deployments.instances"
-        }
-    }
-
-    projectStage = {
-        "$project" : {
-            "groupId" : 1,
-            "_id" : 0
-        }
-    }
-
-    aggPipeline = [
-        matchStage,
-        unwindDeploymentStage,
-        unwindInstancesStage,
-        matchStage,
-        projectStage
-    ]
-    logging.debug("Running pipeline {} to fetch group id ".format(json.dumps(aggPipeline, indent=4)))
-    aggDocs = mongohub.aggregate(aggPipeline)
-    for doc in aggDocs:
-        return doc["groupId"]
-    return None
 
 
 def findGroupIdForHostDataInOpsManager(hostNames):
@@ -863,20 +817,15 @@ def setupArgs():
     Parses all command line arguments to the script
     """
     parser = argparse.ArgumentParser(description='Conducts a health check on the specified host')
-    parser.add_argument('--opsmgrLabel',                required=False, action="store", dest='opsMgrLabel',             default='nonprod',             help='The label of this ops manager. One of [prod, nonprod].')
     parser.add_argument('--opsmgrUri',                  required=False, action="store", dest='opsMgrUri',               default='http:127.0.0.1:8080/', help='The uri of the ops manager instance under which this server will be managed.')
     parser.add_argument('--opsmgrapiuser',              required=False, action="store", dest='opsMgrApiUser',           default='',                     help='The api user for the designated ops manager instance')
     parser.add_argument('--opsmgrapikey',               required=False, action="store", dest='opsMgrApiKey',            default='',                     help='The api key for the designated ops manager instance')
 
-    parser.add_argument('--mongoHubConnectionStr',      required=False, action="store", dest='mongoHubConnectionStr',   default=None,                help='A Mongodb connection URI to a deployment for MongoHub.')
     parser.add_argument('--hostName',                   required=False, action="store", dest='hostName',                default=None,                help='FQDN of the host being checked.')
-
     parser.add_argument('--showCollScans',              required=False, action="store_true", dest='showCollScans',      default=False,                help='Include flag to print collection scans.')
     parser.add_argument('--sortCollScansByDuration',    required=False, action="store_true", dest='sortCollScansByDuration', default=False,           help='Include flag to sort collection scans by duration.')
-
-    parser.add_argument('--logFilePath',                required=False, action="store", dest='logFilePath',        default=False,           help='Path to slow query log file')
-
-    parser.add_argument('--loglevel',                   required=False, action="store", dest='logLevel',                default='info',                 help='Log level. Possible values are [none, info, verbose]')
+    parser.add_argument('--logFilePath',                required=False, action="store", dest='logFilePath',             default=False,           help='Path to slow query log file')
+    parser.add_argument('--loglevel',                   required=False, action="store", dest='logLevel',                default='info',                 help='Log level. Possible values are [none, info, debug]')
 
     # TODO Command line arg for update/refresh
     return parser.parse_args()
@@ -885,7 +834,8 @@ def _configureLogger(logLevel):
     format = '%(message)s'
     if logLevel != 'INFO':
         format = '%(levelname)s: %(message)s'
-    logging.basicConfig(format=format, level=logLevel.upper())
+    logLevel = logging.ERROR if (logLevel is None or logLevel.upper() == "NONE") else logLevel.upper()
+    logging.basicConfig(format=format, level=logLevel)
 
 def gitVersion():
     """
@@ -932,21 +882,10 @@ def gitVersion():
 def main():
 
     args = setupArgs()
-    _configureLogger(args.logLevel.upper())
+    _configureLogger(args.logLevel)
     versionInfo = gitVersion()
     logging.info("Running {} v({}) last modified {}".format(scriptName, versionInfo['version'][:8], versionInfo['date']))
     # checkOsCompatibility()
-
-    #global mongoClient
-    #mongoClient = MongoClient(args.mongoHubHost, int(args.mongoHubPort))
-
-    # Get MongoHub Connection
-    global mongohub
-    if args.mongoHubConnectionStr is None:
-        mongohub = None
-    else:
-        connection = pymongo.MongoClient(args.mongoHubConnectionStr)
-        mongohub = connection["mongohub"]
 
     # Get Ops Manager connection
     global opsMgrConnector
