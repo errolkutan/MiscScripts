@@ -10,7 +10,7 @@ setup(
     ]),
     version='0.1.1',
     description='MDBaaS Library (BNY)',
-    author='Errol Kutan',
+    author='Errol Kutan (MongoDB)',
     license='No license',
     install_requires=[
         'certifi',
