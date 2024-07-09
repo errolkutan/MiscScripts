@@ -143,7 +143,7 @@ class OpsMgrConnector:
     # Misc Non API Methods
     ###########################################################################
 
-    def getVersionManifestSuperset(self, majorVersion):
+    def getVersionManifestSuperset(self, majorVersion, verifyBool=True):
         """
         Get Version Manifest Superset
 
@@ -154,9 +154,9 @@ class OpsMgrConnector:
 
         :return:                A json document representing the version manifest
         """
-        return self.get("{}/version_manifest/{}.json".format(self.staticDataUrl, majorVersion))
+        return self.get("{}/version_manifest/{}.json".format(self.staticDataUrl, majorVersion), verifyBool=verifyBool)
 
-    def getExternalVersionManifestSuperset(self, majorVersion):
+    def getExternalVersionManifestSuperset(self, majorVersion, verifyBool=True):
         """
         Get External Version Manifest Superset
 
@@ -167,13 +167,13 @@ class OpsMgrConnector:
 
         :return:                A json document representing the version manifest
         """
-        return self.get("{}/static/version_manifest/{}.json".format(EXTERNAL_OPS_MANAGER_URL, majorVersion))
+        return self.get("{}/static/version_manifest/{}.json".format(EXTERNAL_OPS_MANAGER_URL, majorVersion), verifyBool=verifyBool)
 
     ############################################################################
     # Agent Methods
     ############################################################################
 
-    def getAgentForGroup(self, groupId, agentType):
+    def getAgentForGroup(self, groupId, agentType, verifyBool=True):
         """
         Get Agent For Group
 
@@ -185,7 +185,7 @@ class OpsMgrConnector:
         :param agentType:   The agent type we are inquiring
         :return:            The response from the request
         """
-        return self.get("{}/groups/{}/agents/{}".format(self.apiURL, groupId, agentType))
+        return self.get("{}/groups/{}/agents/{}".format(self.apiURL, groupId, agentType), verifyBool=verifyBool)
 
     ############################################################################
     # Automation Config Methods
@@ -239,7 +239,7 @@ class OpsMgrConnector:
     # Organization Methods
     ############################################################################
 
-    def getOrganizations(self):
+    def getOrganizations(self, verifyBool=True):
         """
         Get Organization
 
@@ -250,9 +250,9 @@ class OpsMgrConnector:
 
         :return:    The response from the request
         """
-        return self.get("{}/orgs".format(self.apiURL))
+        return self.get("{}/orgs".format(self.apiURL), verifyBool=verifyBool)
 
-    def getOrganizationById(self, orgId):
+    def getOrganizationById(self, orgId, verifyBool=True):
         """
         Get Organization By Id
 
@@ -263,7 +263,7 @@ class OpsMgrConnector:
         :param  orgId:      The organization Id whose data we are retrieving
         :return:            The response from the request
         """
-        return self.get("{}/orgs/{}".format(self.apiURL, orgId))
+        return self.get("{}/orgs/{}".format(self.apiURL, orgId), verifyBool=verifyBool)
 
 
 
@@ -310,7 +310,7 @@ class OpsMgrConnector:
 
         return doc
 
-    def getUsersWithinOrganization(self, orgId):
+    def getUsersWithinOrganization(self, orgId, verifyBool=True):
         """
         Get Users Within an Organization
 
@@ -323,9 +323,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/orgs/{}/users".format(self.apiURL, orgId))
+        return self.get("{}/orgs/{}/users".format(self.apiURL, orgId), verifyBool=verifyBool)
 
-    def createOrganization(self, orgName):
+    def createOrganization(self, orgName, verifyBool=True):
         """
         Create Organization
 
@@ -338,9 +338,9 @@ class OpsMgrConnector:
         payload = {
                     "name" : orgName
                   }
-        return self.post("{}/orgs".format(self.apiURL), payload)
+        return self.post("{}/orgs".format(self.apiURL), payload, verifyBool=verifyBool)
 
-    def deleteOrganization(self, orgId):
+    def deleteOrganization(self, orgId, verifyBool=True):
         """
         Delete Organization
 
@@ -352,13 +352,13 @@ class OpsMgrConnector:
 
         :return:        The response from the request
         """
-        return self.delete("{}/orgs/{}".format(self.apiURL, orgId))
+        return self.delete("{}/orgs/{}".format(self.apiURL, orgId), verifyBool=verifyBool)
 
     ############################################################################
     # Hosts Methods
     ############################################################################
 
-    def getHosts(self, groupId):
+    def getHosts(self, groupId, verifyBool=True):
         """
         Get Hosts
 
@@ -370,9 +370,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/groups/{}/hosts".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}/hosts".format(self.apiURL, groupId), verifyBool=verifyBool)
 
-    def getHostById(self, groupId, hostId):
+    def getHostById(self, groupId, hostId, verifyBool=True):
         """
         Get Hosts by Id
 
@@ -386,9 +386,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/hosts/{}".format(self.apiURL, groupId, hostId))
+        return self.get("{}/groups/{}/hosts/{}".format(self.apiURL, groupId, hostId), verifyBool=verifyBool)
 
-    def getHostByHostnameAndPort(self, groupId, hostname, port):
+    def getHostByHostnameAndPort(self, groupId, hostname, port, verifyBool=True):
         """
         Get Hosts by Hostname and Port
 
@@ -403,9 +403,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/hosts/byName/{}:{}".format(self.apiURL, groupId, hostname, port))
+        return self.get("{}/groups/{}/hosts/byName/{}:{}".format(self.apiURL, groupId, hostname, port), verifyBool=verifyBool)
 
-    def getlastSnapshot(self,groupId,clusterId):
+    def getlastSnapshot(self, groupId, clusterId, verifyBool=True):
 
         """
         Get last backup snapshot information
@@ -421,10 +421,10 @@ class OpsMgrConnector:
             :return:                The response from the request
         """
 
-        return self.get("{}/groups/{}/clusters/{}/snapshots".format(self.apiURL, groupId, clusterId))
+        return self.get("{}/groups/{}/clusters/{}/snapshots".format(self.apiURL, groupId, clusterId), verifyBool=verifyBool)
 
 
-    def startMonitoringHost(self, groupId):
+    def startMonitoringHost(self, groupId, verifyBool=True):
         """
         Start Monitoring Host
 
@@ -439,7 +439,7 @@ class OpsMgrConnector:
         # TODO finish this
         return ""
 
-    def updateMonitoringConfig(self, groupId, hostId):
+    def updateMonitoringConfig(self, groupId, hostId, verifyBool=True):
         """
         Update Monitoring Configuration
 
@@ -455,7 +455,7 @@ class OpsMgrConnector:
         """
         #TODO finish this
 
-    def stopMonitoringOnHost(self, groupId, hostId):
+    def stopMonitoringOnHost(self, groupId, hostId, verifyBool=True):
         """
         Stop Monitoring on Host
 
@@ -469,9 +469,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.delete("{}/groups/{}/hosts/{}".format(self.apiURL, groupId, hostId))
+        return self.delete("{}/groups/{}/hosts/{}".format(self.apiURL, groupId, hostId), verifyBool=verifyBool)
 
-    def getLastPingForHost(self, groupId, hostId):
+    def getLastPingForHost(self, groupId, hostId, verifyBool=True):
         """
         Get Last Ping For Host
 
@@ -481,9 +481,9 @@ class OpsMgrConnector:
         :param hostId:      The id of the hosts whose agents we will fetch ping data for
         :return:            A document representing the ping data
         """
-        return self.get("{}/groups/{}/hosts/{}/lastPing".format(self.apiURL, groupId, hostId))
+        return self.get("{}/groups/{}/hosts/{}/lastPing".format(self.apiURL, groupId, hostId), verifyBool=verifyBool)
 
-    def getDiskPartitionMeasurementOverPeriodForHost(self, groupId, hostId, diskPartitionName, granularity, period):
+    def getDiskPartitionMeasurementOverPeriodForHost(self, groupId, hostId, diskPartitionName, granularity, period, verifyBool=True):
         """
         Get Disk Partition Measurement Over Period For Host
 
@@ -499,10 +499,10 @@ class OpsMgrConnector:
         # TODO fill this out--remember to include URI query params
         return self.get("{}/groups/{}/hosts/{}/disks/{}/measurements?granularity={}&period={}".format(self.apiURL, groupId,
                                                                                              hostId, diskPartitionName, granularity,
-                                                                                             period))
+                                                                                             period), verifyBool=verifyBool)
 
     def getDiskPartitionMeasurementOverPeriodForHost(self, groupId, hostId, diskPartitionName, granularity, period,
-                                                     measurementTypes=None):
+                                                     measurementTypes=None, verifyBool=True):
         """
         Get Disk Partition Measurement Over Period For Host
 
@@ -521,7 +521,7 @@ class OpsMgrConnector:
                                                                                               hostId,
                                                                                               diskPartitionName,
                                                                                               granularity,
-                                                                                              period))
+                                                                                              period), verifyBool=verifyBool)
         measurementTypeStr = ""
         for measurementType in measurementTypes:
             measurementTypeStr += "m={}&".format(measurementType)
@@ -530,9 +530,9 @@ class OpsMgrConnector:
                                                                                             hostId, diskPartitionName,
                                                                                             measurementTypeStr,
                                                                                             granularity,
-                                                                                            period))
+                                                                                            period), verifyBool=verifyBool)
 
-    def getDiskPartitionName(self, groupId, hostId):
+    def getDiskPartitionName(self, groupId, hostId, verifyBool=True):
         """
         Get Disk Partition Measurement Over Period For Host
 
@@ -546,10 +546,10 @@ class OpsMgrConnector:
         :return:
         """
         # TODO fill this out--remember to include URI query params
-        return self.get("{}/groups/{}/hosts/{}/disks/".format(self.apiURL, groupId, hostId))
+        return self.get("{}/groups/{}/hosts/{}/disks/".format(self.apiURL, groupId, hostId), verifyBool=verifyBool)
 
 
-    def getDiskPartitionMeasurementOverIntervalForHost(self, groupId, hostId, diskPartitionName, granularity, intervalStart, intervalEnd):
+    def getDiskPartitionMeasurementOverIntervalForHost(self, groupId, hostId, diskPartitionName, granularity, intervalStart, intervalEnd, verifyBool=True):
         """
         Get Disk Partition Measurement For Host
 
@@ -568,7 +568,7 @@ class OpsMgrConnector:
         # TODO fill this out--remember to include URI query params
         return {}
 
-    def getCputMeasurementOverPeriodForHost(self, groupId, hostId,granularity, period):
+    def getCputMeasurementOverPeriodForHost(self, groupId, hostId,granularity, period, verifyBool=True):
         """
         Get Disk Partition Measurement Over Period For Host
 
@@ -585,9 +585,9 @@ class OpsMgrConnector:
         measurementTypes = [ "" ]
         return self.get("{}/groups/{}/hosts/{}/measurements?granularity={}&period={}".format(self.apiURL, groupId,
                                                                                                   hostId,granularity,
-                                                                                                  period))
+                                                                                                  period), verifyBool=verifyBool)
 
-    def getMeasurementsOverPeriodForHost(self, groupId, hostId,granularity, period, measurementTypes):
+    def getMeasurementsOverPeriodForHost(self, groupId, hostId,granularity, period, measurementTypes, verifyBool=True):
         """
         Get Measurements over period for host
 
@@ -604,13 +604,13 @@ class OpsMgrConnector:
         url = "{}/groups/{}/hosts/{}/measurements?{}granularity={}&period={}".format(self.apiURL, groupId,
                                                                                              hostId, measurementTypeStr,
                                                                                              granularity, period)
-        return self.get(url)
+        return self.get(url, verifyBool=verifyBool)
 
     ############################################################################
     # Performance Advisor Methods
     ############################################################################
 
-    def getSlowQueryLogsForGroupAndHost(self, groupId, hostId, since, duration, nLogs, namespaces):
+    def getSlowQueryLogsForGroupAndHost(self, groupId, hostId, since, duration, nLogs, namespaces, verifyBool=True):
         """
         Get Slow Query Logs for Group and Host
 
@@ -635,14 +635,14 @@ class OpsMgrConnector:
         if queryParamStr != "":
             queryParamStr = "?" + queryParamStr[1:]
         url = "{}/groups/{}/hosts/{}/performanceAdvisor/slowQueryLogs{}".format(self.apiURL, groupId, hostId, queryParamStr)
-        return self.get(url)
+        return self.get(url, verifyBool=verifyBool)
 
 
     ############################################################################
     # Cluster Methods
     ############################################################################
 
-    def getClustersForGroup(self, groupId):
+    def getClustersForGroup(self, groupId, verifyBool=True):
         """
         Get Clusters for Group
 
@@ -654,9 +654,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/groups/{}/clusters".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}/clusters".format(self.apiURL, groupId), verifyBool=verifyBool)
 
-    def getClusterById(self, groupId, clusterId):
+    def getClusterById(self, groupId, clusterId, verifyBool=True):
         """
         Get Cluster by ID
 
@@ -669,9 +669,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/groups/{}/clusters/{}".format(self.apiURL, groupId, clusterId))
+        return self.get("{}/groups/{}/clusters/{}".format(self.apiURL, groupId, clusterId), verifyBool=verifyBool)
 
-    def changeClusterName(self, groupId, clusterId, clusterName):
+    def changeClusterName(self, groupId, clusterId, clusterName, verifyBool=True):
         """
         Change Cluster Name
 
@@ -688,13 +688,13 @@ class OpsMgrConnector:
         payload = {
                     "clusterName" : clusterName
                   }
-        return self.patch("{}/groups/{groupId}/clusters/{clusterId}".format(self.apiURL, groupId, clusterId), payload)
+        return self.patch("{}/groups/{groupId}/clusters/{clusterId}".format(self.apiURL, groupId, clusterId), payload, verifyBool=verifyBool)
 
     ############################################################################
     # Groups Methods
     #############################Å###############################################
 
-    def getAllGroups(self):
+    def getAllGroups(self, verifyBool=True):
         """
         Get All Groups
 
@@ -703,18 +703,18 @@ class OpsMgrConnector:
 
         GET	/groups
         """
-        data        = self.getGroups()
+        data        = self.getGroups(verifyBool=verifyBool)
         totalCount  = data["totalCount"]
         numPages    = int(math.ceil(float(totalCount)/float(GROUPS_PER_PAGE)))
 
         doc             = {}
         doc["results"]  = []
         for i in range(1, numPages+1):
-            groupDoc = self.getGroups(pageNum=i)
+            groupDoc = self.getGroups(pageNum=i, verifyBool=verifyBool)
             doc["results"].extend(groupDoc["results"])
         return doc
 
-    def getGroups(self, pageNum=None, itemsPerPage=None):
+    def getGroups(self, pageNum=None, itemsPerPage=None, verifyBool=True):
         """
 
         :param pageNum:
@@ -729,9 +729,9 @@ class OpsMgrConnector:
                 queryStr += "&itemsPerPage={}".format(itemsPerPage)
             else:
                 queryStr += "?itemsPerPage={}".format(itemsPerPage)
-        return self.get(queryStr)
+        return self.get(queryStr, verifyBool=verifyBool)
 
-    def getGroupById(self, groupId):
+    def getGroupById(self, groupId, verifyBool=True):
         """
         Get Groups By ID
 
@@ -743,9 +743,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/groups/{}".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}".format(self.apiURL, groupId), verifyBool=verifyBool)
 
-    def getGroupByName(self, groupName):
+    def getGroupByName(self, groupName, verifyBool=True):
         """
         Get Group By Name
 
@@ -757,9 +757,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/groups/byName/{}".format(self.apiURL, groupName))
+        return self.get("{}/groups/byName/{}".format(self.apiURL, groupName), verifyBool=verifyBool)
 
-    def getGroupByAgentApiKey(self, agentApiKey):
+    def getGroupByAgentApiKey(self, agentApiKey, verifyBool=True):
         """
         Get Group by Agent Api Key
 
@@ -772,9 +772,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/byAgentApiKey/{}".format(self.apiURL, agentApiKey))
+        return self.get("{}/groups/byAgentApiKey/{}".format(self.apiURL, agentApiKey), verifyBool=verifyBool)
 
-    def getUsersInGroup(self, groupId):
+    def getUsersInGroup(self, groupId, verifyBool=True):
         """
         Get Users in Group
 
@@ -786,9 +786,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/users".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}/users".format(self.apiURL, groupId), verifyBool=verifyBool)
 
-    def getTeamsInGroup(self, groupId):
+    def getTeamsInGroup(self, groupId, verifyBool=True):
         """
         Get Teanms in Group
 
@@ -800,10 +800,10 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/teams".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}/teams".format(self.apiURL, groupId), verifyBool=verifyBool)
 
 
-    def addGroup(self, newGroupName, organizationId):
+    def addGroup(self, newGroupName, organizationId, verifyBool=True):
         """
         Add Group
 
@@ -821,9 +821,9 @@ class OpsMgrConnector:
                     "name"  : newGroupName,
                     "orgId" : organizationId
                   }
-        return self.post("{}/groups".format(self.apiURL), payload)
+        return self.post("{}/groups".format(self.apiURL), payload, verifyBool=verifyBool)
 
-    def addUsersToGroup(self, groupId, userId, rolesArr, groupRoleId, roleName):
+    def addUsersToGroup(self, groupId, userId, rolesArr, groupRoleId, roleName, verifyBool=True):
         """
         Add Users to Group
 
@@ -845,9 +845,9 @@ class OpsMgrConnector:
                     "id"            : userId,
                     "roles"         : rolesArr,
                    }
-        return self.post("{}/groups/{}/users".format(self.apiURL, groupId), payload)
+        return self.post("{}/groups/{}/users".format(self.apiURL, groupId), payload, verifyBool=verifyBool)
 
-    def addTeamsToGroup(self, groupId):
+    def addTeamsToGroup(self, groupId, verifyBool=True):
         """
         Add Teams To Group
 
@@ -858,7 +858,7 @@ class OpsMgrConnector:
         # TODO populate this
         return ""
 
-    def changeGroupName(self, groupId, newName):
+    def changeGroupName(self, groupId, newName, verifyBool=True):
         """
         Change Group Name
 
@@ -875,9 +875,9 @@ class OpsMgrConnector:
                     "id"    : groupId,
                     "name"  : newName
                   }
-        return self.patch("{}/groups/{}".format(self.apiURL, groupId), payload)
+        return self.patch("{}/groups/{}".format(self.apiURL, groupId), payload, verifyBool=verifyBool)
 
-    def removeUserFromGroup(self, groupId, userId):
+    def removeUserFromGroup(self, groupId, userId, verifyBool=True):
         """
         Remove User From Group
 
@@ -890,9 +890,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.delete("{}/groups/{}/users/{}".format(self.apiURL, groupId, userId))
+        return self.delete("{}/groups/{}/users/{}".format(self.apiURL, groupId, userId), verifyBool=verifyBool)
 
-    def removeGroup(self, groupId):
+    def removeGroup(self, groupId, verifyBool=True):
         """
         Remove Group
 
@@ -904,13 +904,13 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.delete("{}/groups/{}".format(self.apiURL, groupId))
+        return self.delete("{}/groups/{}".format(self.apiURL, groupId), verifyBool=verifyBool)
 
     ############################################################################
     # API Keys
     ############################################################################
 
-    def createProgrammaticAPIKeyForOrg(self, organizationId, description, roles):
+    def createProgrammaticAPIKeyForOrg(self, organizationId, description, roles, verifyBool=True):
         """
         Create Programmatic API Key via the API endpoint:
 
@@ -929,10 +929,10 @@ class OpsMgrConnector:
             "desc" : description,
             "roles" : roles
         }
-        return self.post("{}/orgs/{}/apiKeys".format(self.apiURL, organizationId), payload)
+        return self.post("{}/orgs/{}/apiKeys".format(self.apiURL, organizationId), payload, verifyBool=verifyBool)
 
 
-    def deleteOrganizationAPIKey(self, organizationId, apiKeyId):
+    def deleteOrganizationAPIKey(self, organizationId, apiKeyId, verifyBool=True):
         """
         Delete Organization API Key
 
@@ -945,10 +945,10 @@ class OpsMgrConnector:
         :param apiKeyId:
         :return:
         """
-        return self.delete("{}/orgs/{}/apiKeys/{}".format(self.apiURL, organizationId, apiKeyId))
+        return self.delete("{}/orgs/{}/apiKeys/{}".format(self.apiURL, organizationId, apiKeyId), verifyBool=verifyBool)
 
 
-    def createAccessListEntriesForAnOrganizationAPIKey(self, organizationId, apiKeyId, accessList):
+    def createAccessListEntriesForAnOrganizationAPIKey(self, organizationId, apiKeyId, accessList, verifyBool=True):
         """
         Create Access List Entries for an Organization API Key
 
@@ -961,10 +961,10 @@ class OpsMgrConnector:
         :param accessList:
         :return:
         """
-        return self.post("{}/orgs/{}/apiKeys/{}/accessList".format(self.apiURL, organizationId, apiKeyId), accessList)
+        return self.post("{}/orgs/{}/apiKeys/{}/accessList".format(self.apiURL, organizationId, apiKeyId), accessList, verifyBool=verifyBool)
 
 
-    def createAndAssignAnOrgAPIKeyToProject(self, projectId, description, roles):
+    def createAndAssignAnOrgAPIKeyToProject(self, projectId, description, roles, verifyBool=True):
         """
         Create and Assign one Organization API Key to a Project via the endpoint
 
@@ -982,13 +982,13 @@ class OpsMgrConnector:
             "desc": description,
             "roles": roles
         }
-        return self.post("{}/groups/{}/apiKeys".format(self.apiURL, projectId), payload)
+        return self.post("{}/groups/{}/apiKeys".format(self.apiURL, projectId), payload, verifyBool=verifyBool)
 
     ############################################################################
     # Server Pools Methods
     ############################################################################
 
-    def getServerPoolsEnabled(self):
+    def getServerPoolsEnabled(self, verifyBool=True):
         """
         Get Server Pools Enabled
 
@@ -999,9 +999,9 @@ class OpsMgrConnector:
 
         :return:    The response from the request
         """
-        return self.get("{}/serverPool".format(self.apiURL))
+        return self.get("{}/serverPool".format(self.apiURL), verifyBool=True)
 
-    def getServerPoolServers(self, status=None):
+    def getServerPoolServers(self, status=None, verifyBool=True):
         """
         Get Server Pool Servers
 
@@ -1020,7 +1020,7 @@ class OpsMgrConnector:
             logging.error("Encountered an error")
         return self.get("{}/serverPool/servers".format(self.apiURL))
 
-    def getServerPoolServerById(self, poolServerId):
+    def getServerPoolServerById(self, poolServerId, verifyBool=True):
         """
         Get Server Pool Server By Id
 
@@ -1033,9 +1033,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/serverPool/servers/{}".format(self.apiURL, poolServerId))
+        return self.get("{}/serverPool/servers/{}".format(self.apiURL, poolServerId), verifyBool=verifyBool)
 
-    def getServerPoolServersByHostname(self, hostname,groupId):
+    def getServerPoolServersByHostname(self, hostname, groupId, verifyBool=True):
         """
         Get Server Pool Servers By Hostname
 
@@ -1048,9 +1048,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/serverPool/servers/byName/{}".format(self.apiURL, hostname))
+        return self.get("{}/serverPool/servers/byName/{}".format(self.apiURL, hostname), verifyBool=verifyBool)
 
-    def removeServerFromPool(self, poolServerId):
+    def removeServerFromPool(self, poolServerId, verifyBool=True):
         """
         Remove Server from Server Pool
 
@@ -1062,9 +1062,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.delete("{}/serverPool/servers/{}".format(self.apiURL, poolServerId))
+        return self.delete("{}/serverPool/servers/{}".format(self.apiURL, poolServerId), verifyBool=verifyBool)
 
-    def getServerPoolRequests(self, requestStatus=None, requestId=None):
+    def getServerPoolRequests(self, requestStatus=None, requestId=None, verifyBool=True):
         """
         Get Server Pool Requests
 
@@ -1084,12 +1084,12 @@ class OpsMgrConnector:
         :return:                    The response from the request
         """
         if requestId is not None:
-            return self.get("{}/serverPool/requests/{}".format(self.apiURL, requestId))
+            return self.get("{}/serverPool/requests/{}".format(self.apiURL, requestId), verifyBool=verifyBool)
         if requestStatus is not None:
-            return self.get("{}/serverPool/requests?status={}".format(self.apiURL, requestStatus))
-        return self.get("{}/serverPool/requests".format(self.apiURL))
+            return self.get("{}/serverPool/requests?status={}".format(self.apiURL, requestStatus), verifyBool=verifyBool)
+        return self.get("{}/serverPool/requests".format(self.apiURL), verifyBool=verifyBool)
 
-    def cancelServerPoolRequest(self, requestId):
+    def cancelServerPoolRequest(self, requestId, verifyBool=True):
         """
         Cancel Server Pool Request
 
@@ -1102,9 +1102,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.delete("{}/serverPool/requests/{}".format(self.apiURL, requestId))
+        return self.delete("{}/serverPool/requests/{}".format(self.apiURL, requestId), verifyBool=verifyBool)
 
-    def getServerPoolProperties(self):
+    def getServerPoolProperties(self, verifyBool=True):
         """
         Get Server Pool Properties
 
@@ -1115,10 +1115,10 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/serverPool/properties".format(self.apiURL))
+        return self.get("{}/serverPool/properties".format(self.apiURL), verifyBool=verifyBool)
 
     # TODO fix this
-    def updatePropertySettings(self, propertyId, newPropertyDescription, multiSelect=False, newStatusName=None):
+    def updatePropertySettings(self, propertyId, newPropertyDescription, multiSelect=False, newStatusName=None, verifyBool=True):
         """
         Update Property Settings
 
@@ -1139,10 +1139,10 @@ class OpsMgrConnector:
                     "multiSelect"   : multiSelect,
                     "statusName"    : newStatusName
                 }
-        return self.patch("{}/serverPool/properties/{}".format(self.apiURL, propertyId), payload)
+        return self.patch("{}/serverPool/properties/{}".format(self.apiURL, propertyId), payload, verifyBool=verifyBool)
 
     # TODO fix this
-    def updatePropertyValue(self, propertyId, newValue):
+    def updatePropertyValue(self, propertyId, newValue, verifyBool=True):
         """
         Update Property Value
 
@@ -1155,9 +1155,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.patch("{}/serverPool/properties/{}/values/{}".format(self.apiURL, propertyId, newValue), {})
+        return self.patch("{}/serverPool/properties/{}/values/{}".format(self.apiURL, propertyId, newValue), {}, verifyBool=verifyBool)
 
-    def deleteProperty(self, propertyId):
+    def deleteProperty(self, propertyId, verifyBool=True):
         """
         Delete Property
 
@@ -1169,9 +1169,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.delete("{}/serverPool/properties/{}".format(self.apiURL, propertyId))
+        return self.delete("{}/serverPool/properties/{}".format(self.apiURL, propertyId), verifyBool=verifyBool)
 
-    def deletePropertyValue(self, propertyId, propertyValue):
+    def deletePropertyValue(self, propertyId, propertyValue, verifyBool=True):
         """
         Delete Property Value
 
@@ -1185,9 +1185,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.delete("{}/serverPool/properties/{}/values/{}".format(self.apiURL, propertyId, propertyValue))
+        return self.delete("{}/serverPool/properties/{}/values/{}".format(self.apiURL, propertyId, propertyValue), verifyBool=verifyBool)
 
-    def getServerPoolServersForGroup(self, groupId):
+    def getServerPoolServersForGroup(self, groupId, verifyBool=True):
         """
         Get Server Pool Servers For Group
 
@@ -1199,9 +1199,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/serverPool/servers".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}/serverPool/servers".format(self.apiURL, groupId), verifyBool=verifyBool)
 
-    def sendServerPoolRequestForGroup(self, groupId, numServersRequested, serverPoolProperties):
+    def sendServerPoolRequestForGroup(self, groupId, numServersRequested, serverPoolProperties, verifyBool=True):
         """
         Send Server Pool Request For Group
 
@@ -1224,13 +1224,13 @@ class OpsMgrConnector:
             arr.append(serverPoolProperties.getDocument())
             i += 1
         payload = { "properties" : arr }
-        return self.post("{}/groups/{}/serverPool/requests".format(self.apiURL, groupId), payload)
+        return self.post("{}/groups/{}/serverPool/requests".format(self.apiURL, groupId), payload, verifyBool=verifyBool)
 
     ############################################################################
     # Alerts Methods
     ############################################################################
 
-    def sendAlertConfigurationForGroup(self, groupId, alertConfigurationDocument):
+    def sendAlertConfigurationForGroup(self, groupId, alertConfigurationDocument, verifyBool=True):
         """
         Send Alert Configuration For Group
 
@@ -1244,13 +1244,13 @@ class OpsMgrConnector:
         :return:                                The response from the request
         """
         # payload = json.dumps(alertConfigurationDocument)
-        return self.post("{}/groups/{}/alertConfigs".format(self.apiURL, groupId), alertConfigurationDocument)
+        return self.post("{}/groups/{}/alertConfigs".format(self.apiURL, groupId), alertConfigurationDocument, verifyBool=verifyBool)
 
     ############################################################################
     # Backup Admin Methods
     ############################################################################
 
-    def getProjectBackupJobConfigs(self, groupId=None):
+    def getProjectBackupJobConfigs(self, groupId=None, verifyBool=True):
         """
         Get All Project Backup Job Configs
 
@@ -1258,9 +1258,9 @@ class OpsMgrConnector:
         """
         if groupId is None:
             return self.get("{}/admin/backup/groups".format(self.apiURL))
-        return self.get("{}/admin/backup/groups/{}".format(self.apiURL, groupId))
+        return self.get("{}/admin/backup/groups/{}".format(self.apiURL, groupId), verifyBool=verifyBool)
 
-    def getBlockstoreConfigs(self, blockStoreId=None):
+    def getBlockstoreConfigs(self, blockStoreId=None, verifyBool=True):
         """
         Get BlockStore Configs for a Blockstore
 
@@ -1268,10 +1268,10 @@ class OpsMgrConnector:
         :return:
         """
         if blockStoreId is None:
-            return self.get("{}/admin/backup/snapshot/mongoConfigs".format(self.apiURL))
-        return self.get("{}/admin/backup/snapshot/mongoConfigs/{}".format(self.apiURL, blockStoreId))
+            return self.get("{}/admin/backup/snapshot/mongoConfigs".format(self.apiURL), verifyBool=verifyBool)
+        return self.get("{}/admin/backup/snapshot/mongoConfigs/{}".format(self.apiURL, blockStoreId), verifyBool=verifyBool)
 
-    def getOplogstoreConfig(self, oplogStoreId=None):
+    def getOplogstoreConfig(self, oplogStoreId=None, verifyBool=True):
         """
         Get Oplog Store
 
@@ -1279,14 +1279,14 @@ class OpsMgrConnector:
         :return:
         """
         if oplogStoreId is None:
-            return self.get("{}/admin/backup/oplog/mongoConfigs".format(self.apiURL))
-        return self.get("{}/admin/backup/oplog/mongoConfigs/{}".format(self.apiURL, oplogStoreId))
+            return self.get("{}/admin/backup/oplog/mongoConfigs".format(self.apiURL), verifyBool=verifyBool)
+        return self.get("{}/admin/backup/oplog/mongoConfigs/{}".format(self.apiURL, oplogStoreId), verifyBool=verifyBool)
 
     ############################################################################
     # Backup Config Methods
     ############################################################################
 
-    def getBackupConfigsForGroup(self, groupId):
+    def getBackupConfigsForGroup(self, groupId, verifyBool=True):
         """
         Get Backup Configs For Group
 
@@ -1299,10 +1299,10 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/backupConfigs".format(self.apiURL, groupId))
+        return self.get("{}/groups/{}/backupConfigs".format(self.apiURL, groupId), verifyBool=verifyBool)
 
     # TODO change the naming from Deployment to Cluster
-    def getBackupConfigsForDeployment(self, groupId, clusterId):
+    def getBackupConfigsForDeployment(self, groupId, clusterId, verifyBool=True):
         """
         Get Backup Configs for Cluster
 
@@ -1316,9 +1316,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/backupConfigs/{}".format(self.apiURL, groupId, clusterId))
+        return self.get("{}/groups/{}/backupConfigs/{}".format(self.apiURL, groupId, clusterId), verifyBool=verifyBool)
 
-    def updateBackupConfigurationForDeployment(self, groupId, clusterId, statusName, syncSource):
+    def updateBackupConfigurationForDeployment(self, groupId, clusterId, statusName, syncSource, verifyBool=True):
         """
         Update Backup Configs for Cluster
 
@@ -1342,13 +1342,13 @@ class OpsMgrConnector:
                     "syncSource"        : syncSource,
                     "statusName"        : statusName
                   }
-        return self.patch("{}/groups/{}/backupConfigs/{}".format(self.apiURL, groupId, clusterId), payload)
+        return self.patch("{}/groups/{}/backupConfigs/{}".format(self.apiURL, groupId, clusterId), payload, verifyBool=verifyBool)
 
     ############################################################################
     # Snapshot Schedule Methods
     ############################################################################
 
-    def getSnapshotScheduleForCluster(self, groupId, clusterId):
+    def getSnapshotScheduleForCluster(self, groupId, clusterId, verifyBool=True):
         """
         Get Snapshot Schedule For Cluster
 
@@ -1362,9 +1362,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/groups/{}/backupConfigs/{}/snapshotSchedule".format(self.apiURL, groupId, clusterId))
+        return self.get("{}/groups/{}/backupConfigs/{}/snapshotSchedule".format(self.apiURL, groupId, clusterId), verifyBool=verifyBool)
 
-    def setupSnapshotScheduleForCluster(self, groupId, clusterId, snapshotSchedule):
+    def setupSnapshotScheduleForCluster(self, groupId, clusterId, snapshotSchedule, verifyBool=True):
         """
         Set Snapshot Schedule For Cluster
 
@@ -1378,9 +1378,10 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.patch("{}/groups/{}/backupConfigs/{}/snapshotSchedule".format(self.apiURL, groupId, clusterId), snapshotSchedule)
+        return self.patch("{}/groups/{}/backupConfigs/{}/snapshotSchedule".format(self.apiURL, groupId, clusterId),
+                          snapshotSchedule, verifyBool=verifyBool)
 
-    def updateSnapshotScheduleForCluster(self, groupId, clusterId):
+    def updateSnapshotScheduleForCluster(self, groupId, clusterId, verifyBool=True):
         """
         Update Snapshot Schedule for Cluster
 
@@ -1409,13 +1410,13 @@ class OpsMgrConnector:
                     "referenceMinuteOfHour"         : "",
                     "referenceTimeZoneOffset"       : ""
                 }
-        return self.patch("{}/groups/{}/backupConfigs/{}/snapshotSchedule".format(self.apiURL, groupId, clusterId), payload)
+        return self.patch("{}/groups/{}/backupConfigs/{}/snapshotSchedule".format(self.apiURL, groupId, clusterId), payload, verifyBool=verifyBool)
 
     ############################################################################
     # Snapshot Methods
     ############################################################################
 
-    def getSnapshotForCluster(self, groupId, clusterId):
+    def getSnapshotForCluster(self, groupId, clusterId, verifyBool=True):
         """
         Get Snapshot For Cluster
 
@@ -1429,9 +1430,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/groups/{}/clusters/{}/snapshots".format(self.apiURL, groupId, clusterId))
+        return self.get("{}/groups/{}/clusters/{}/snapshots".format(self.apiURL, groupId, clusterId), verifyBool=verifyBool)
 
-    def getSnapshotById(self, groupId, clusterId, snapshotId):
+    def getSnapshotById(self, groupId, clusterId, snapshotId, verifyBool=True):
         """
         Get Snapshot By Id
 
@@ -1446,9 +1447,9 @@ class OpsMgrConnector:
 
         :return:            The response from the request
         """
-        return self.get("{}/groups/{}/clusters/{}/snapshot/{}".format(self.apiURL, groupId, clusterId, snapshotId))
+        return self.get("{}/groups/{}/clusters/{}/snapshot/{}".format(self.apiURL, groupId, clusterId, snapshotId), verifyBool=verifyBool)
 
-    def changeExpirationDateForSnapshot(self, groupId, clusterId, snapshotId, newExpirationDate):
+    def changeExpirationDateForSnapshot(self, groupId, clusterId, snapshotId, newExpirationDate, verifyBool=True):
         """
         Change Expiration Date for Snapshot
 
@@ -1467,9 +1468,10 @@ class OpsMgrConnector:
         payload = { "doNotDelete" : False,
                     "expires" : newExpirationDate
                   }
-        return self.patch("{}/groups/{}/clusters/{}/snapshot/{}".format(self.apiURL, groupId, clusterId, snapshotId), payload)
+        return self.patch("{}/groups/{}/clusters/{}/snapshot/{}".format(self.apiURL, groupId, clusterId, snapshotId),
+                          payload, verifyBool=verifyBool)
 
-    def getSnapshotsForConfigServer(self, groupId, hostId):
+    def getSnapshotsForConfigServer(self, groupId, hostId, verifyBool=True):
         """
         Get Snapshots for Config Server
 
@@ -1482,9 +1484,9 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/hosts/{}/snapshots".format(self.apiURL, groupId, hostId))
+        return self.get("{}/groups/{}/hosts/{}/snapshots".format(self.apiURL, groupId, hostId), verifyBool=verifyBool)
 
-    def getSnapshotByIdForConfigServer(self, groupId, hostId, snapshotId):
+    def getSnapshotByIdForConfigServer(self, groupId, hostId, snapshotId, verifyBool=True):
         """
         Get Snapshots by ID for Config Server
 
@@ -1498,13 +1500,13 @@ class OpsMgrConnector:
 
         :return:                The response from the request
         """
-        return self.get("{}/groups/{}/hosts/{}/snapshots/{}".format(self.apiURL, groupId, hostId,snapshotId))
+        return self.get("{}/groups/{}/hosts/{}/snapshots/{}".format(self.apiURL, groupId, hostId,snapshotId), verifyBool=verifyBool)
 
     # TODO ##########################################################
     # TODO ADD EVERYTHING  below this line
     # TODO ##########################################################
 
-    def getDatabasesForHost(self, groupId, hostId, pageNum):
+    def getDatabasesForHost(self, groupId, hostId, pageNum, verifyBool=True):
         """
         Get Databases For Host
 
@@ -1512,7 +1514,7 @@ class OpsMgrConnector:
         :param hostId:
         :return:
         """
-        return self.get("{}/groups/{}/hosts/{}/databases?page={}".format(self.apiURL, groupId, hostId, pageNum))
+        return self.get("{}/groups/{}/hosts/{}/databases?page={}".format(self.apiURL, groupId, hostId, pageNum), verifyBool=verifyBool)
 
     # def getCollectionsInDB(self, groupId, clusterId, pageNum):
 

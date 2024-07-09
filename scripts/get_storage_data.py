@@ -73,7 +73,7 @@ def collect_storage_data(scale="BYTES"):
 
     metricScale = SCALE_MAP[VALID_SCALES.get(scale)]
 
-    allGroups = opsMgrConnector.getAllGroups()
+    allGroups = opsMgrConnector.getAllGroups(verifyBool=False)
     storageData = []
     for group in allGroups["results"]:
         storageDataForGroup = collect_storage_data_for_group(group)
@@ -119,7 +119,7 @@ def collect_storage_data_for_group(group):
     storageDataForGroup = []
 
     # Get each cluster in this project
-    clusterForProject = opsMgrConnector.getClustersForGroup(group["id"])
+    clusterForProject = opsMgrConnector.getClustersForGroup(group["id"], verifyBool=False)
     for cluster in clusterForProject["results"]:
         storageDataForCluster = collect_storage_data_for_cluster(group, cluster)
         storageDataForGroup.extend(storageDataForCluster)
@@ -140,7 +140,7 @@ def collect_storage_data_for_cluster(group, cluster):
     storageDataForCluster = []
 
     # Get each host in this cluster
-    hostsForProject = opsMgrConnector.getHosts(cluster["groupId"])
+    hostsForProject = opsMgrConnector.getHosts(cluster["groupId"], verifyBool=False)
     for host in hostsForProject["results"]:
         if host["clusterId"] == clusterId:
             storageDataForHost = collect_storage_data_for_host(group, cluster, host)
@@ -160,12 +160,12 @@ def collect_storage_data_for_host(group, cluster, host):
         "DISK_PARTITION_SPACE_FREE",
         "DISK_PARTITION_SPACE_USED"
     ]
-    disks = opsMgrConnector.getDiskPartitionName(host["groupId"], host["id"])
+    disks = opsMgrConnector.getDiskPartitionName(host["groupId"], host["id"], verifyBool=False)
 
     disk_measurement_data = None
     for disk in disks["results"]:
         diskMeaurementsForPartition = opsMgrConnector.getDiskPartitionMeasurementOverPeriodForHost(
-            host["groupId"], host["id"], disk["partitionName"], "PT1H", "P30D", diskMeasurementNames
+            host["groupId"], host["id"], disk["partitionName"], "PT1H", "P30D", diskMeasurementNames, verifyBool=False
         )
         disk_measurement_data = diskMeaurementsForPartition
 
@@ -178,7 +178,7 @@ def collect_storage_data_for_host(group, cluster, host):
     ]
 
     host_measurement_data = opsMgrConnector.getMeasurementsOverPeriodForHost(
-        host["groupId"], host["id"], "PT1H", "P30D", storageMeasurements
+        host["groupId"], host["id"], "PT1H", "P30D", storageMeasurements, verifyBool=False
     )
 
     validMeasurement = get_valid_nonnull_measurement(host_measurement_data, storageMeasurements)
@@ -325,8 +325,8 @@ def getRowDataForGroup(group):
     :param group:
     :return:
     """
-    clusters = opsMgrConnector.getClustersForGroup(group["id"])
-    automationConfigForGroup = opsMgrConnector.getAutomationConfig(group["id"])
+    clusters = opsMgrConnector.getClustersForGroup(group["id"], verifyBool=False)
+    automationConfigForGroup = opsMgrConnector.getAutomationConfig(group["id"], verifyBool=False)
     rowData = []
     for cluster in clusters["results"]:
         rowData.extend(getRowDataForCluster(cluster, group, automationConfigForGroup))
@@ -336,7 +336,7 @@ def getRowDataForGroup(group):
 def getRowDataForCluster(cluster, group, automationConfig=None):
     logging.debug("Getting data for cluster " + cluster["clusterName"])
     if automationConfig is None:
-        automationConfig = opsMgrConnector.getAutomationConfig(cluster["groupId"])
+        automationConfig = opsMgrConnector.getAutomationConfig(cluster["groupId"], verifyBool=False)
     processes = getProcessesForCluster(cluster, automationConfig)
 
     rowData = []
@@ -357,7 +357,7 @@ def getRowDataForProcess(cluster, group, process, automationConfig):
     logging.debug("Getting host information for process {}".format(json.dumps(process, indent=4)))
     hostname = process["hostname"]
     port = process["args2_6"]["net"]["port"]
-    hostData = opsMgrConnector.getHostByHostnameAndPort(cluster["groupId"], hostname, port)
+    hostData = opsMgrConnector.getHostByHostnameAndPort(cluster["groupId"], hostname, port, verifyBool=False)
     logging.debug("Received host data {}".format(json.dumps(hostData, indent=4)))
 
     hostType = hostData["typeName"]
@@ -369,12 +369,12 @@ def getRowDataForProcess(cluster, group, process, automationConfig):
     # Get Databases for host
     dbsSeen = []
     pageNum = 0
-    dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum)
+    dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum, verifyBool=False)
     while len(dbsSeen) < dbsOnHost["totalCount"]:
         logging.debug("Examining page {} of db results; there are a total of {} dbs".format(pageNum, dbsOnHost["totalCount"]))
         dbsSeen.extend([ db["databaseName"] for db in dbsOnHost["results"]])
         pageNum += 1
-        dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum)
+        dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum, verifyBool=False)
 
     dbsSeen.add("admin")
 
@@ -487,7 +487,8 @@ def _configureLogger(logLevel):
     if logLevel != 'INFO':
         format = '%(levelname)s: %(message)s'
     logLevelMapping = logging.getLevelNamesMapping()
-    logging.basicConfig(format=format, level=logLevelMapping.get(logLevel.upper()), filename="debug.log")
+    # logging.basicConfig(format=format, level=logLevelMapping.get(logLevel.upper()), filename="debug.log")
+    logging.basicConfig(format=format, level=logLevel.upper(), filename="debug.log")
 
 def gitVersion():
     """
