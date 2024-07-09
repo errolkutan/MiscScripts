@@ -53,6 +53,7 @@ SCALE_MAP = {
 SECONDS_IN_HOUR = 60*60
 APPLICATION_ENVS = [ "PROD", "UAT", "DEV"]
 
+verifyCerts = True
 
 ########################################################################################################################
 # Base Methods
@@ -73,7 +74,7 @@ def collect_storage_data(scale="BYTES"):
 
     metricScale = SCALE_MAP[VALID_SCALES.get(scale)]
 
-    allGroups = opsMgrConnector.getAllGroups(verifyBool=False)
+    allGroups = opsMgrConnector.getAllGroups(verifyBool=verifyCerts)
     storageData = []
     for group in allGroups["results"]:
         storageDataForGroup = collect_storage_data_for_group(group)
@@ -119,7 +120,7 @@ def collect_storage_data_for_group(group):
     storageDataForGroup = []
 
     # Get each cluster in this project
-    clusterForProject = opsMgrConnector.getClustersForGroup(group["id"], verifyBool=False)
+    clusterForProject = opsMgrConnector.getClustersForGroup(group["id"], verifyBool=verifyCerts)
     for cluster in clusterForProject["results"]:
         storageDataForCluster = collect_storage_data_for_cluster(group, cluster)
         storageDataForGroup.extend(storageDataForCluster)
@@ -140,7 +141,7 @@ def collect_storage_data_for_cluster(group, cluster):
     storageDataForCluster = []
 
     # Get each host in this cluster
-    hostsForProject = opsMgrConnector.getHosts(cluster["groupId"], verifyBool=False)
+    hostsForProject = opsMgrConnector.getHosts(cluster["groupId"], verifyBool=verifyCerts)
     for host in hostsForProject["results"]:
         if host["clusterId"] == clusterId:
             storageDataForHost = collect_storage_data_for_host(group, cluster, host)
@@ -160,12 +161,12 @@ def collect_storage_data_for_host(group, cluster, host):
         "DISK_PARTITION_SPACE_FREE",
         "DISK_PARTITION_SPACE_USED"
     ]
-    disks = opsMgrConnector.getDiskPartitionName(host["groupId"], host["id"], verifyBool=False)
+    disks = opsMgrConnector.getDiskPartitionName(host["groupId"], host["id"], verifyBool=verifyCerts)
 
     disk_measurement_data = None
     for disk in disks["results"]:
         diskMeaurementsForPartition = opsMgrConnector.getDiskPartitionMeasurementOverPeriodForHost(
-            host["groupId"], host["id"], disk["partitionName"], "PT1H", "P30D", diskMeasurementNames, verifyBool=False
+            host["groupId"], host["id"], disk["partitionName"], "PT1H", "P30D", diskMeasurementNames, verifyBool=verifyCerts
         )
         disk_measurement_data = diskMeaurementsForPartition
 
@@ -178,7 +179,7 @@ def collect_storage_data_for_host(group, cluster, host):
     ]
 
     host_measurement_data = opsMgrConnector.getMeasurementsOverPeriodForHost(
-        host["groupId"], host["id"], "PT1H", "P30D", storageMeasurements, verifyBool=False
+        host["groupId"], host["id"], "PT1H", "P30D", storageMeasurements, verifyBool=verifyCerts
     )
 
     validMeasurement = get_valid_nonnull_measurement(host_measurement_data, storageMeasurements)
@@ -325,8 +326,8 @@ def getRowDataForGroup(group):
     :param group:
     :return:
     """
-    clusters = opsMgrConnector.getClustersForGroup(group["id"], verifyBool=False)
-    automationConfigForGroup = opsMgrConnector.getAutomationConfig(group["id"], verifyBool=False)
+    clusters = opsMgrConnector.getClustersForGroup(group["id"], verifyBool=verifyCerts)
+    automationConfigForGroup = opsMgrConnector.getAutomationConfig(group["id"], verifyBool=verifyCerts)
     rowData = []
     for cluster in clusters["results"]:
         rowData.extend(getRowDataForCluster(cluster, group, automationConfigForGroup))
@@ -336,7 +337,7 @@ def getRowDataForGroup(group):
 def getRowDataForCluster(cluster, group, automationConfig=None):
     logging.debug("Getting data for cluster " + cluster["clusterName"])
     if automationConfig is None:
-        automationConfig = opsMgrConnector.getAutomationConfig(cluster["groupId"], verifyBool=False)
+        automationConfig = opsMgrConnector.getAutomationConfig(cluster["groupId"], verifyBool=verifyCerts)
     processes = getProcessesForCluster(cluster, automationConfig)
 
     rowData = []
@@ -357,7 +358,7 @@ def getRowDataForProcess(cluster, group, process, automationConfig):
     logging.debug("Getting host information for process {}".format(json.dumps(process, indent=4)))
     hostname = process["hostname"]
     port = process["args2_6"]["net"]["port"]
-    hostData = opsMgrConnector.getHostByHostnameAndPort(cluster["groupId"], hostname, port, verifyBool=False)
+    hostData = opsMgrConnector.getHostByHostnameAndPort(cluster["groupId"], hostname, port, verifyBool=verifyCerts)
     logging.debug("Received host data {}".format(json.dumps(hostData, indent=4)))
 
     hostType = hostData["typeName"]
@@ -369,12 +370,12 @@ def getRowDataForProcess(cluster, group, process, automationConfig):
     # Get Databases for host
     dbsSeen = []
     pageNum = 0
-    dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum, verifyBool=False)
+    dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum, verifyBool=verifyCerts)
     while len(dbsSeen) < dbsOnHost["totalCount"]:
         logging.debug("Examining page {} of db results; there are a total of {} dbs".format(pageNum, dbsOnHost["totalCount"]))
         dbsSeen.extend([ db["databaseName"] for db in dbsOnHost["results"]])
         pageNum += 1
-        dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum, verifyBool=False)
+        dbsOnHost = opsMgrConnector.getDatabasesForHost(cluster["groupId"], hostData["id"], pageNum, verifyBool=verifyCerts)
 
     dbsSeen.add("admin")
 
@@ -476,8 +477,9 @@ def setupArgs():
     # parser.add_argument('--projectAppName',           required=False, action="store", dest='projectAppName',    default=None,                help='The Application pneumonic.')
     # parser.add_argument('--projectAppEnv',            required=False, action="store", dest='projectAppEnv',     default=None,                help='The application environment. One of ' + APPLICATION_ENVS.__str__() )
 
-    parser.add_argument('--fileName',                 required=False, action="store", dest='fileName',          default=None,                 help='Path of the file to write to; if not used, will write to standard out')
-    parser.add_argument('--loglevel',                 required=False, action="store", dest='logLevel',                default='info',                 help='Log level. Possible values are [none, info, verbose]')
+    # parser.add_argument('--fileName',                 required=False, action="store", dest='fileName',          default=None,                 help='Path of the file to write to; if not used, will write to standard out')
+    parser.add_argument('--verifycerts',  required=False, action="store", dest='verifycerts',       default=True,                 help='Whether or not to verify TLS certs on HTTPS requests')
+    parser.add_argument('--loglevel',     required=False, action="store", dest='logLevel',          default='info',                 help='Log level. Possible values are [none, info, verbose]')
 
     # TODO Command line arg for update/refresh
     return parser.parse_args()
@@ -543,6 +545,9 @@ def main():
     # Get Ops Manager connection
     global opsMgrConnector
     opsMgrConnector = OpsMgrConnector(args.opsMgrUri, args.opsMgrApiUser, args.opsMgrApiKey)
+
+    global verifyCerts
+    verifyCerts = args.verifycerts
     collect_storage_data(args.scale)
 
 
