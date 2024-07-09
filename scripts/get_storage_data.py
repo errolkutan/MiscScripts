@@ -43,6 +43,7 @@ VALID_SCALE_NAMES = {
     "m" : "MB",
     "mb" : "MB",
     "megabytes" : "MB",
+    "g" : "GB",
     "gb" : "GB",
     "gigabytes" : "GB"
 }
@@ -94,7 +95,9 @@ def collect_storage_data(destFileName, scale="BYTES"):
                           "Data + Index Size ({})".format(VALID_SCALE_NAMES[scale]),
                           "Disk Space Free on Data Partition ({})".format(VALID_SCALE_NAMES[scale]),
                           "Disk Space Used on Data Partition ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Disk Space Total on Data Partition ({})".format(VALID_SCALE_NAMES[scale])
+                          "Disk Space Total on Data Partition ({})".format(VALID_SCALE_NAMES[scale]),
+                          "Disk Space Free on Data Partition (%)",
+                          "Disk Space Used on Data Partition (%)"
                           ]
     for record in storageData:
         table.add_row([
@@ -105,7 +108,9 @@ def collect_storage_data(destFileName, scale="BYTES"):
             "{0:.2f}".format((record["DB_INDEX_SIZE_TOTAL"] + record["DB_DATA_SIZE_TOTAL"])/metricScale),
             "{0:.2f}".format(record["DISK_PARTITION_SPACE_FREE"]/metricScale),
             "{0:.2f}".format(record["DISK_PARTITION_SPACE_USED"]/metricScale),
-            "{0:.2f}".format((record["DISK_PARTITION_SPACE_FREE"] + record["DISK_PARTITION_SPACE_USED"])/metricScale)
+            "{0:.2f}".format((record["DISK_PARTITION_SPACE_FREE"] + record["DISK_PARTITION_SPACE_USED"])/metricScale),
+            "{0:.2f}".format(record["DISK_PARTITION_SPACE_PERCENT_FREE"]),
+            "{0:.2f}".format(record["DISK_PARTITION_SPACE_PERCENT_USED"])
         ])
 
     if destFileName is not None:
@@ -167,7 +172,9 @@ def collect_storage_data_for_host(group, cluster, host):
     """
     diskMeasurementNames = [
         "DISK_PARTITION_SPACE_FREE",
-        "DISK_PARTITION_SPACE_USED"
+        "DISK_PARTITION_SPACE_PERCENT_FREE",
+        "DISK_PARTITION_SPACE_USED",
+        "DISK_PARTITION_SPACE_PERCENT_USED"
     ]
     disks = opsMgrConnector.getDiskPartitionName(host["groupId"], host["id"], verifyBool=verifyCerts)
 
@@ -203,7 +210,9 @@ def collect_storage_data_for_host(group, cluster, host):
         "DB_STORAGE_TOTAL" : validMeasurement["DB_STORAGE_TOTAL"],
         "DB_INDEX_SIZE_TOTAL" : validMeasurement["DB_INDEX_SIZE_TOTAL"],
         "DISK_PARTITION_SPACE_FREE" : validDiskMeasurements["DISK_PARTITION_SPACE_FREE"],
-        "DISK_PARTITION_SPACE_USED" : validDiskMeasurements["DISK_PARTITION_SPACE_USED"]
+        "DISK_PARTITION_SPACE_PERCENT_FREE" : validDiskMeasurements["DISK_PARTITION_SPACE_PERCENT_FREE"],
+        "DISK_PARTITION_SPACE_USED" : validDiskMeasurements["DISK_PARTITION_SPACE_USED"],
+        "DISK_PARTITION_SPACE_PERCENT_USED" : validDiskMeasurements["DISK_PARTITION_SPACE_PERCENT_USED"]
     }
     return data
 
