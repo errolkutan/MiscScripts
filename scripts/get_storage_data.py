@@ -488,7 +488,7 @@ def _configureLogger(logLevel):
     format = '%(message)s'
     if logLevel != 'INFO':
         format = '%(levelname)s: %(message)s'
-    logLevelMapping = logging.getLevelNamesMapping()
+    # logLevelMapping = logging.getLevelNamesMapping()
     # logging.basicConfig(format=format, level=logLevelMapping.get(logLevel.upper()), filename="debug.log")
     logging.basicConfig(format=format, level=logLevel.upper(), filename="debug.log")
 
@@ -547,7 +547,7 @@ def main():
     opsMgrConnector = OpsMgrConnector(args.opsMgrUri, args.opsMgrApiUser, args.opsMgrApiKey)
 
     global verifyCerts
-    verifyCerts = args.verifycerts
+    verifyCerts = (args.verifycerts.lower() == 'true')
     collect_storage_data(args.scale)
 
 
