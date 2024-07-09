@@ -24,10 +24,13 @@ VALID_SCALES = {
     "b" : "bytes",
     "bytes" : "bytes",
     "k" : "kilobytes",
+    "kb" : "kilobytes",
     "kilobytes" : "kilobytes",
     "m" : "megabytes",
+    "mb" : "megabytes",
     "megabytes" : "megabytes",
     "g" : "gigabytes",
+    "gb" : "gigabytes",
     "gigabytes" : "gigabytes"
 }
 
@@ -35,10 +38,12 @@ VALID_SCALE_NAMES = {
     "b" : "B",
     "bytes" : "B",
     "k" : "KB",
+    "kb" : "KB",
     "kilobytes" : "KB",
     "m" : "MB",
+    "mb" : "MB",
     "megabytes" : "MB",
-    "g" : "GB",
+    "gb" : "GB",
     "gigabytes" : "GB"
 }
 
@@ -59,7 +64,7 @@ verifyCerts = True
 # Base Methods
 ########################################################################################################################
 
-def collect_storage_data(scale="BYTES"):
+def collect_storage_data(destFileName, scale="BYTES"):
     """
     Collect Storage Data
 
@@ -83,27 +88,30 @@ def collect_storage_data(scale="BYTES"):
     logging.debug("Constructing report metadata table")
     table = PrettyTable()
     table.field_names = [ "Project Name", "Cluster Name", "Host Name",
-                          "Storage Size Total ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Data Size Total ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Index Size Total ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Data + Index Size Total ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Disk Space Free on Data Dir Partition ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Disk Space Used on Data Dir Partition ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Disk Space Total on Data Dir Partition ({})".format(VALID_SCALE_NAMES[scale])
+                          "Storage Size ({})".format(VALID_SCALE_NAMES[scale]),
+                          "Data Size ({})".format(VALID_SCALE_NAMES[scale]),
+                          "Index Size ({})".format(VALID_SCALE_NAMES[scale]),
+                          "Data + Index Size ({})".format(VALID_SCALE_NAMES[scale]),
+                          "Disk Space Free on Data Partition ({})".format(VALID_SCALE_NAMES[scale]),
+                          "Disk Space Used on Data Partition ({})".format(VALID_SCALE_NAMES[scale]),
+                          "Disk Space Total on Data Partition ({})".format(VALID_SCALE_NAMES[scale])
                           ]
     for record in storageData:
         table.add_row([
             record["groupName"], record["clusterName"], record["hostName"],
-            record["DB_STORAGE_TOTAL"] / metricScale,
-            record["DB_DATA_SIZE_TOTAL"]/metricScale,
-            record["DB_INDEX_SIZE_TOTAL"]/metricScale,
-            (record["DB_INDEX_SIZE_TOTAL"] + record["DB_DATA_SIZE_TOTAL"])/metricScale,
-            record["DISK_PARTITION_SPACE_FREE"]/metricScale,
-            record["DISK_PARTITION_SPACE_USED"]/metricScale,
-            (record["DISK_PARTITION_SPACE_FREE"] + record["DISK_PARTITION_SPACE_USED"])/metricScale,
+            "{0:.2f}".format(record["DB_STORAGE_TOTAL"] / metricScale),
+            "{0:.2f}".format(record["DB_DATA_SIZE_TOTAL"]/metricScale),
+            "{0:.2f}".format(record["DB_INDEX_SIZE_TOTAL"]/metricScale),
+            "{0:.2f}".format((record["DB_INDEX_SIZE_TOTAL"] + record["DB_DATA_SIZE_TOTAL"])/metricScale),
+            "{0:.2f}".format(record["DISK_PARTITION_SPACE_FREE"]/metricScale),
+            "{0:.2f}".format(record["DISK_PARTITION_SPACE_USED"]/metricScale),
+            "{0:.2f}".format((record["DISK_PARTITION_SPACE_FREE"] + record["DISK_PARTITION_SPACE_USED"])/metricScale)
         ])
 
-    print(table.get_string())
+    if destFileName is not None:
+        writeDataToFile(destFileName, table.get_string())
+    else:
+        print(table.get_string())
     print("Done!")
 
 def collect_storage_data_for_group(group):
@@ -198,16 +206,6 @@ def collect_storage_data_for_host(group, cluster, host):
         "DISK_PARTITION_SPACE_USED" : validDiskMeasurements["DISK_PARTITION_SPACE_USED"]
     }
     return data
-
-def get_disk_measurements(host):
-    """
-    Get Disk Measurements
-
-    :param host:
-    :return:
-    """
-
-
 
 def get_valid_nonnull_measurement(measurements_data, measurement_names):
     """
@@ -477,7 +475,7 @@ def setupArgs():
     # parser.add_argument('--projectAppName',           required=False, action="store", dest='projectAppName',    default=None,                help='The Application pneumonic.')
     # parser.add_argument('--projectAppEnv',            required=False, action="store", dest='projectAppEnv',     default=None,                help='The application environment. One of ' + APPLICATION_ENVS.__str__() )
 
-    # parser.add_argument('--fileName',                 required=False, action="store", dest='fileName',          default=None,                 help='Path of the file to write to; if not used, will write to standard out')
+    parser.add_argument('--fileName',     required=False, action="store", dest='fileName',          default=None,                 help='Path of the file to write to; if not used, will write to standard out')
     parser.add_argument('--verifycerts',  required=False, action="store", dest='verifycerts',       default=True,                 help='Whether or not to verify TLS certs on HTTPS requests')
     parser.add_argument('--loglevel',     required=False, action="store", dest='logLevel',          default='info',                 help='Log level. Possible values are [none, info, verbose]')
 
@@ -548,7 +546,7 @@ def main():
 
     global verifyCerts
     verifyCerts = (args.verifycerts.lower() == 'true')
-    collect_storage_data(args.scale)
+    collect_storage_data(args.fileName, args.scale)
 
 
 #-------------------------------
