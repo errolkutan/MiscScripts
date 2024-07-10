@@ -2,6 +2,9 @@
 import operator
 import platform
 import sys
+
+import requests
+
 sys.path.append('.')
 import os
 import logging
@@ -14,8 +17,8 @@ from mdbaas.opsmgrutil import OpsMgrConnector
 
 # Script metadata
 version         = "1.0.0"
-revdate         = "07-08-2024"
-scriptName      = "get_storage_data"
+revdate         = "07-10-2024"
+scriptName      = "perf_advisor_check"
 scriptNameFull  = scriptName + ".py"
 completionStr   = "\n====================================================================\n                      Completed " + scriptName + "!!!!              \n ====================================================================\n"
 
@@ -66,297 +69,56 @@ verifyCerts = True
 # Base Methods
 ########################################################################################################################
 
-def collect_storage_data(destFileName, scale="BYTES"):
+def collect_perf_advisor_data_for_project(groupId):
     """
-    Collect Storage Data
 
+    :param project:
     :return:
     """
-    logging.debug("Using scale {}".format(scale))
-    scale = scale.lower()
-    if scale not in VALID_SCALES.keys():
-        raise Exception("Scale {} is invalid. Must be one of {}".format(
-            scale, VALID_SCALES.keys()
-        ))
-
-    metricScale = SCALE_MAP[VALID_SCALES.get(scale)]
-
-    allGroups = opsMgrConnector.getAllGroups(verifyBool=verifyCerts)
-    storageData = []
-    for group in allGroups["results"]:
-        storageDataForGroup = collect_storage_data_for_group(group)
-        storageData.extend(storageDataForGroup)
+    processes_in_project = get_processes_for_group(groupId)
+    for process in processes_in_project:
+        slow_queries = collect_slow_queries_for_project_and_process(groupId, process["id"])
+        suggested_index = collect_suggested_indexes_for_project_and_process(groupId, process["id"])
 
 
-    # storageData = get_mock_data()
-
-    logging.debug("Constructing report metadata table")
-    table = PrettyTable()
-    table.field_names = [ "Project Name", "Cluster Name", "Host Name",
-                          "Storage Size ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Data Size ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Index Size ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Data + Index Size ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Disk Space Free on Data Partition ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Disk Space Used on Data Partition ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Disk Space Total on Data Partition ({})".format(VALID_SCALE_NAMES[scale]),
-                          "Disk Space Free on Data Partition (%)",
-                          "Disk Space Used on Data Partition (%)"
-                          ]
-    for record in storageData:
-        table.add_row([
-            record["groupName"], record["clusterName"], record["hostName"],
-            "{0:.2f}".format(record["DB_STORAGE_TOTAL"] / metricScale),
-            "{0:.2f}".format(record["DB_DATA_SIZE_TOTAL"]/metricScale),
-            "{0:.2f}".format(record["DB_INDEX_SIZE_TOTAL"]/metricScale),
-            "{0:.2f}".format((record["DB_INDEX_SIZE_TOTAL"] + record["DB_DATA_SIZE_TOTAL"])/metricScale),
-            "{0:.2f}".format(record["DISK_PARTITION_SPACE_FREE"]/metricScale),
-            "{0:.2f}".format(record["DISK_PARTITION_SPACE_USED"]/metricScale),
-            "{0:.2f}".format((record["DISK_PARTITION_SPACE_FREE"] + record["DISK_PARTITION_SPACE_USED"])/metricScale),
-            "{0:.2f}".format(record["DISK_PARTITION_SPACE_PERCENT_FREE"]),
-            "{0:.2f}".format(record["DISK_PARTITION_SPACE_PERCENT_USED"])
-        ])
-
-    table_str = table.get_string(sort_key=operator.itemgetter(1,2), sortby="Project Name")
-    if destFileName is not None:
-        writeDataToFile(destFileName, table_str)
-    else:
-        print(table_str)
-    print("Done!")
-
-# def sort_by_columns_in_order(row1, row2=None):
-#     """
-#     Sort Order for Row Data
-#
-#     :param row1:
-#     :param row2:
-#     :return:
-#     """
-#     if row2 is None:
-#         return 1
-#     smallest_len = min(len(row1), len(row2))
-#     for i in range(1, smallest_len):
-#         # If Row 1 > Row 2 for Column i, then Row 1 should come after
-#         if row1[i] > row2[i]:
-#             return 1
-#         # Otherwise it should come first
-#         elif row1[i] < row2[i]:
-#             return -1
-#
-#         # If they are equal, we should consider the next column for sorting
-#     return -1
-
-def collect_storage_data_for_group(group):
+def get_processes_for_group(groupId):
     """
-    Collect Storage Data For Group
+    Get Processes for Group
 
     :param groupId:
     :return:
     """
-    groupId = group["id"]
-    logging.info("Found group with id {}".format(groupId))
-    logging.debug("Found group: {}".format(json.dumps(group, indent=4)))
+    url = "https://cloud.mongodb.com/api/atlas/v1.0/groups/{}/processes".format(groupId)
+    resp = requests.get(url)
+    return resp.json()
 
-    storageDataForGroup = []
-
-    # Get each cluster in this project
-    clusterForProject = opsMgrConnector.getClustersForGroup(group["id"], verifyBool=verifyCerts)
-    for cluster in clusterForProject["results"]:
-        storageDataForCluster = collect_storage_data_for_cluster(group, cluster)
-        storageDataForGroup.extend(storageDataForCluster)
-
-    return storageDataForGroup
-
-def collect_storage_data_for_cluster(group, cluster):
+def collect_slow_queries_for_project_and_process(groupId, processId):
     """
-    Collect Storage Data for Cluster
 
-    :param cluster:
+    :param groupId:
+    :param processId:
     :return:
     """
-    clusterId = cluster["id"]
-    logging.info("Found cluster with id {}".format(clusterId))
-    logging.debug("Found cluster: {}".format(json.dumps(cluster, indent=4)))
-
-    storageDataForCluster = []
-
-    # Get each host in this cluster
-    hostsForProject = opsMgrConnector.getHosts(cluster["groupId"], verifyBool=verifyCerts)
-    for host in hostsForProject["results"]:
-        if host["clusterId"] == clusterId:
-            storageDataForHost = collect_storage_data_for_host(group, cluster, host)
-            storageDataForCluster.append(storageDataForHost)
-
-    return storageDataForCluster
-
-
-def collect_storage_data_for_host(group, cluster, host):
-    """
-    Collect Storage Data For Host
-
-    :param host:
-    :return:
-    """
-    diskMeasurementNames = [
-        "DISK_PARTITION_SPACE_FREE",
-        "DISK_PARTITION_SPACE_PERCENT_FREE",
-        "DISK_PARTITION_SPACE_USED",
-        "DISK_PARTITION_SPACE_PERCENT_USED"
-    ]
-    disks = opsMgrConnector.getDiskPartitionName(host["groupId"], host["id"], verifyBool=verifyCerts)
-
-    disk_measurement_data = None
-    for disk in disks["results"]:
-        diskMeaurementsForPartition = opsMgrConnector.getDiskPartitionMeasurementOverPeriodForHost(
-            host["groupId"], host["id"], disk["partitionName"], "PT1H", "P30D", diskMeasurementNames, verifyBool=verifyCerts
-        )
-        disk_measurement_data = diskMeaurementsForPartition
-
-    validDiskMeasurements = get_valid_nonnull_measurement(disk_measurement_data, diskMeasurementNames)
-
-    storageMeasurements = [
-        "DB_DATA_SIZE_TOTAL",
-        "DB_STORAGE_TOTAL",
-        "DB_INDEX_SIZE_TOTAL"
-    ]
-
-    host_measurement_data = opsMgrConnector.getMeasurementsOverPeriodForHost(
-        host["groupId"], host["id"], "PT1H", "P30D", storageMeasurements, verifyBool=verifyCerts
+    url = "https://cloud.mongodb.com/api/atlas/v1.0/groups/{}/processes/{}/performanceAdvisor/slowQueryLogs".format(
+        groupId, processId
     )
+    resp = requests.get(url)
+    return resp.json()
 
-    validMeasurement = get_valid_nonnull_measurement(host_measurement_data, storageMeasurements)
 
-    cluster_name = cluster["clusterName"]
-    if cluster["typeName"] == "REPLICA_SET":
-         cluster_name = cluster["replicaSetName"]
-    elif cluster["typeName"] == "SHARDED":
-        cluster_name = cluster["shardName"]
-
-    data = {
-        "groupId" : host["groupId"],
-        "groupName" : group["name"],
-        "clusterId" : host["clusterId"],
-        "clusterName" : cluster_name,
-        "hostId" : host["id"],
-        "hostName" : host["hostname"],
-        "DB_DATA_SIZE_TOTAL" : validMeasurement["DB_DATA_SIZE_TOTAL"],
-        "DB_STORAGE_TOTAL" : validMeasurement["DB_STORAGE_TOTAL"],
-        "DB_INDEX_SIZE_TOTAL" : validMeasurement["DB_INDEX_SIZE_TOTAL"],
-        "DISK_PARTITION_SPACE_FREE" : validDiskMeasurements["DISK_PARTITION_SPACE_FREE"],
-        "DISK_PARTITION_SPACE_PERCENT_FREE" : validDiskMeasurements["DISK_PARTITION_SPACE_PERCENT_FREE"],
-        "DISK_PARTITION_SPACE_USED" : validDiskMeasurements["DISK_PARTITION_SPACE_USED"],
-        "DISK_PARTITION_SPACE_PERCENT_USED" : validDiskMeasurements["DISK_PARTITION_SPACE_PERCENT_USED"]
-    }
-    return data
-
-def get_mock_data():
+def collect_suggested_indexes_for_project_and_process(groupId, processId):
     """
+    Collect Suggested Indexes for Project and Process
 
+    :param groupId:
+    :param processId:
     :return:
     """
-    data = [
-        {
-            "groupId": "groupId2",
-            "groupName": "group2",
-            "clusterId": "clusterId3",
-            "clusterName": "clusterName1",
-            "hostId": "2",
-            "hostName": "hostname1",
-            "DB_DATA_SIZE_TOTAL": 22,
-            "DB_STORAGE_TOTAL": 22,
-            "DB_INDEX_SIZE_TOTAL": 33,
-            "DISK_PARTITION_SPACE_FREE": 344,
-            "DISK_PARTITION_SPACE_PERCENT_FREE": 33,
-            "DISK_PARTITION_SPACE_USED": 24,
-            "DISK_PARTITION_SPACE_PERCENT_USED": 55
-        },
-        {
-            "groupId": "groupId1",
-            "groupName": "group1",
-            "clusterId": "clusterId3",
-            "clusterName": "clusterName3",
-            "hostId": "2",
-            "hostName": "hostname1",
-            "DB_DATA_SIZE_TOTAL": 22,
-            "DB_STORAGE_TOTAL": 22,
-            "DB_INDEX_SIZE_TOTAL": 33,
-            "DISK_PARTITION_SPACE_FREE": 344,
-            "DISK_PARTITION_SPACE_PERCENT_FREE": 33,
-            "DISK_PARTITION_SPACE_USED": 24,
-            "DISK_PARTITION_SPACE_PERCENT_USED": 55
-        },
-        {
-            "groupId": "groupId1",
-            "groupName": "group1",
-            "clusterId": "clusterId1",
-            "clusterName": "clusterName1",
-            "hostId": "2",
-            "hostName": "hostname1",
-            "DB_DATA_SIZE_TOTAL": 22,
-            "DB_STORAGE_TOTAL": 22,
-            "DB_INDEX_SIZE_TOTAL": 33,
-            "DISK_PARTITION_SPACE_FREE": 344,
-            "DISK_PARTITION_SPACE_PERCENT_FREE": 33,
-            "DISK_PARTITION_SPACE_USED": 24,
-            "DISK_PARTITION_SPACE_PERCENT_USED": 55
-        },
-        {
-            "groupId": "groupId1",
-            "groupName": "group1",
-            "clusterId": "clusterId2",
-            "clusterName": "clusterName2",
-            "hostId": "2",
-            "hostName": "hostname1",
-            "DB_DATA_SIZE_TOTAL": 22,
-            "DB_STORAGE_TOTAL": 22,
-            "DB_INDEX_SIZE_TOTAL": 33,
-            "DISK_PARTITION_SPACE_FREE": 344,
-            "DISK_PARTITION_SPACE_PERCENT_FREE": 33,
-            "DISK_PARTITION_SPACE_USED": 24,
-            "DISK_PARTITION_SPACE_PERCENT_USED": 55
-        }
-    ]
-    return data
-
-
-def get_valid_nonnull_measurement(measurements_data, measurement_names):
-    """
-    Get Valid Non-null Measurements
-
-    :param measurements_data:
-    :param measurement_names:
-    :return:
-    """
-    # Get minimum length of data points among all of the measurements in question
-    endIndex = 10000000
-    for measurement in measurements_data["measurements"]:
-        if measurement["name"] in measurement_names:
-            endIndex = min(endIndex, len(measurement["dataPoints"]))
-
-    # Construct Default Measurement
-    valid_measurement = { }
-    for name in measurement_names:
-        valid_measurement[name] = None
-
-    # Find valid measurement
-    for i in sorted(range(0, endIndex), reverse=True):
-
-        # Construct measurement at index i
-        measurementAtIndex = { }
-        for name in measurement_names:
-            for measurement in measurements_data["measurements"]:
-                if measurement["name"] == name:
-                    measurementAtIndex[name] = measurement["dataPoints"][i]["value"]
-
-        # Check if valid
-        isValid = True
-        for name in measurement_names:
-            isValid = isValid and measurementAtIndex[name] is not None
-
-        if isValid:
-            return measurementAtIndex
-
-    return valid_measurement
+    url = "https://cloud.mongodb.com/api/atlas/v1.0/groups/{}/processes/{}/performanceAdvisor/suggestedIndexes".format(
+        groupId, processId
+    )
+    resp = requests.get(url)
+    return resp.json()
 
 
 def shouldSkipOpsMgrProject(scriptConfig, groupData):
