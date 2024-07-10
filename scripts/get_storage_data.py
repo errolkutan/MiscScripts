@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import operator
 import platform
 import sys
 sys.path.append('.')
@@ -86,6 +87,9 @@ def collect_storage_data(destFileName, scale="BYTES"):
         storageDataForGroup = collect_storage_data_for_group(group)
         storageData.extend(storageDataForGroup)
 
+
+    storageData = get_mock_data()
+
     logging.debug("Constructing report metadata table")
     table = PrettyTable()
     table.field_names = [ "Project Name", "Cluster Name", "Host Name",
@@ -113,11 +117,34 @@ def collect_storage_data(destFileName, scale="BYTES"):
             "{0:.2f}".format(record["DISK_PARTITION_SPACE_PERCENT_USED"])
         ])
 
+    table_str = table.get_string(sort_key=operator.itemgetter(1,2), sortby="Project Name")
     if destFileName is not None:
-        writeDataToFile(destFileName, table.get_string())
+        writeDataToFile(destFileName, table_str)
     else:
-        print(table.get_string())
+        print(table_str)
     print("Done!")
+
+# def sort_by_columns_in_order(row1, row2=None):
+#     """
+#     Sort Order for Row Data
+#
+#     :param row1:
+#     :param row2:
+#     :return:
+#     """
+#     if row2 is None:
+#         return 1
+#     smallest_len = min(len(row1), len(row2))
+#     for i in range(1, smallest_len):
+#         # If Row 1 > Row 2 for Column i, then Row 1 should come after
+#         if row1[i] > row2[i]:
+#             return 1
+#         # Otherwise it should come first
+#         elif row1[i] < row2[i]:
+#             return -1
+#
+#         # If they are equal, we should consider the next column for sorting
+#     return -1
 
 def collect_storage_data_for_group(group):
     """
@@ -199,11 +226,17 @@ def collect_storage_data_for_host(group, cluster, host):
 
     validMeasurement = get_valid_nonnull_measurement(host_measurement_data, storageMeasurements)
 
+    cluster_name = cluster["clusterName"]
+    if cluster["typeName"] == "REPLICA_SET":
+         cluster_name = cluster["replicaSetName"]
+    elif cluster["typeName"] == "SHARDED":
+        cluster_name = cluster["shardName"]
+
     data = {
         "groupId" : host["groupId"],
         "groupName" : group["name"],
         "clusterId" : host["clusterId"],
-        "clusterName" : cluster["clusterName"],
+        "clusterName" : cluster_name,
         "hostId" : host["id"],
         "hostName" : host["hostname"],
         "DB_DATA_SIZE_TOTAL" : validMeasurement["DB_DATA_SIZE_TOTAL"],
@@ -215,6 +248,76 @@ def collect_storage_data_for_host(group, cluster, host):
         "DISK_PARTITION_SPACE_PERCENT_USED" : validDiskMeasurements["DISK_PARTITION_SPACE_PERCENT_USED"]
     }
     return data
+
+def get_mock_data():
+    """
+
+    :return:
+    """
+    data = [
+        {
+            "groupId": "groupId2",
+            "groupName": "group2",
+            "clusterId": "clusterId3",
+            "clusterName": "clusterName1",
+            "hostId": "2",
+            "hostName": "hostname1",
+            "DB_DATA_SIZE_TOTAL": 22,
+            "DB_STORAGE_TOTAL": 22,
+            "DB_INDEX_SIZE_TOTAL": 33,
+            "DISK_PARTITION_SPACE_FREE": 344,
+            "DISK_PARTITION_SPACE_PERCENT_FREE": 33,
+            "DISK_PARTITION_SPACE_USED": 24,
+            "DISK_PARTITION_SPACE_PERCENT_USED": 55
+        },
+        {
+            "groupId": "groupId1",
+            "groupName": "group1",
+            "clusterId": "clusterId3",
+            "clusterName": "clusterName3",
+            "hostId": "2",
+            "hostName": "hostname1",
+            "DB_DATA_SIZE_TOTAL": 22,
+            "DB_STORAGE_TOTAL": 22,
+            "DB_INDEX_SIZE_TOTAL": 33,
+            "DISK_PARTITION_SPACE_FREE": 344,
+            "DISK_PARTITION_SPACE_PERCENT_FREE": 33,
+            "DISK_PARTITION_SPACE_USED": 24,
+            "DISK_PARTITION_SPACE_PERCENT_USED": 55
+        },
+        {
+            "groupId": "groupId1",
+            "groupName": "group1",
+            "clusterId": "clusterId1",
+            "clusterName": "clusterName1",
+            "hostId": "2",
+            "hostName": "hostname1",
+            "DB_DATA_SIZE_TOTAL": 22,
+            "DB_STORAGE_TOTAL": 22,
+            "DB_INDEX_SIZE_TOTAL": 33,
+            "DISK_PARTITION_SPACE_FREE": 344,
+            "DISK_PARTITION_SPACE_PERCENT_FREE": 33,
+            "DISK_PARTITION_SPACE_USED": 24,
+            "DISK_PARTITION_SPACE_PERCENT_USED": 55
+        },
+        {
+            "groupId": "groupId1",
+            "groupName": "group1",
+            "clusterId": "clusterId2",
+            "clusterName": "clusterName2",
+            "hostId": "2",
+            "hostName": "hostname1",
+            "DB_DATA_SIZE_TOTAL": 22,
+            "DB_STORAGE_TOTAL": 22,
+            "DB_INDEX_SIZE_TOTAL": 33,
+            "DISK_PARTITION_SPACE_FREE": 344,
+            "DISK_PARTITION_SPACE_PERCENT_FREE": 33,
+            "DISK_PARTITION_SPACE_USED": 24,
+            "DISK_PARTITION_SPACE_PERCENT_USED": 55
+        }
+    ]
+    return data
+
 
 def get_valid_nonnull_measurement(measurements_data, measurement_names):
     """
@@ -439,21 +542,6 @@ def getProcessesForCluster(cluster, automationConfig=None):
     return processes
 
 
-def writeDataToFile(fileName, data):
-    """
-    Write Data To File
-
-    :return:
-    """
-    logging.info("Writing data to file with name " + fileName)
-    with open(fileName, "w") as file:
-        file.write(data)
-        file.close()
-
-########################################################################################################################
-# Base Methods
-########################################################################################################################
-
 def checkOsCompatibility():
     """
     Check OS Compatibility
@@ -467,6 +555,10 @@ def checkOsCompatibility():
             "{}: Supported Operating Systems are: Linux".format(scriptName, opSys, scriptName)
         )
         sys.exit()
+
+########################################################################################################################
+# Base Methods
+########################################################################################################################
 
 def setupArgs():
     """
@@ -540,6 +632,17 @@ def gitVersion():
         'version': gitVersion,
         'date': commitDate
     }
+
+def writeDataToFile(fileName, data):
+    """
+    Write Data To File
+
+    :return:
+    """
+    logging.info("Writing data to file with name " + fileName)
+    with open(fileName, "w") as file:
+        file.write(data)
+        file.close()
 
 def main():
 
