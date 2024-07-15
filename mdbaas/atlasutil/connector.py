@@ -139,6 +139,25 @@ class AtlasConnector:
         return result
 
     ############################################################################
+    # Project Level Endpoints
+    ############################################################################
+
+    def get_project(self, group_id):
+        """
+        Get Project
+
+        :param group_id:
+        :return:
+        """
+        url = "{}/groups/{}".format(
+            self.v1ApiURL,
+            group_id
+        )
+        return self.get(url)
+
+
+
+    ############################################################################
     # Cluster Level Endpoints
     ############################################################################
 

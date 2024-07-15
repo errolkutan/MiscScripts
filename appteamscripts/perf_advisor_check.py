@@ -5,13 +5,14 @@ import sys
 
 import requests
 
-sys.path.append('../scripts')
+sys.path.append('../appteamscripts')
 import os
 import logging
 import subprocess
 import argparse
 import json
 from prettytable import PrettyTable
+from datetime import datetime
 
 from mdbaas.atlasutil import AtlasConnector
 
@@ -68,6 +69,127 @@ APPLICATION_ENVS = [ "PROD", "UAT", "DEV"]
 # Base Methods
 ########################################################################################################################
 
+def create_perf_report(report_data, max_slow_queries):
+    """
+    Create Perf Report
+
+    :param report_data:
+    :return:
+    """
+    perf_advisor_heading = f"<h1>Perf Advisor Report for Ops Mgr Project {report_data['projectName']} ({report_data['projectId']})</h1>"
+    cluster_html = create_cluster_html_data(report_data, max_slow_queries)
+
+    header = ("<!DOCTYPE html>"
+              "<html>"
+              "<head>"
+              "<style>"
+              "table, th, td {"
+              " border: 1px solid black;"
+              "})"
+              "</style>"
+              "</head>")
+
+    html = (f"{header}"
+            f"<body>"
+                f"{perf_advisor_heading}"
+                    f"{cluster_html}"
+            f"</body>")
+
+    html_file_name = "reports/perfAdvisorReport.html"
+    with open(html_file_name, 'w') as f:
+        f.write(html)
+
+def create_cluster_html_data(report_data, max_slow_queries):
+    """
+    Create Cluster HTML Data
+    :return:
+    """
+    MAX_NUM_LOG_ENTRIES_PER_SHAPE = 5
+    html = ""
+    query_shape_num = 0
+    for cluster_data in report_data["clusters"]:
+        # Index Suggestions
+
+
+        # Slow queries
+        sample_log_entry = None
+        slow_query_html = ""
+        for slow_query_shape in cluster_data["slowQueries"]:
+            log_entries_html = ""
+            for log_entry in slow_query_shape["logs"][0:MAX_NUM_LOG_ENTRIES_PER_SHAPE]:
+                log_entries_html += (f"<p>{str(log_entry)}</p>"
+                                     f"<br></br>")
+                sample_log_entry = log_entry
+
+            log_entries_html += (f"<br></br>"
+                                f"<span style='white-space: pre-line'></span>")
+
+            query_shape_num += 1
+            query_shape = sample_log_entry['logData']['attr']['command']['filter']
+            slow_query_html += (f"<h4>Query Shape {query_shape_num}: {query_shape}</h4>"
+                                f"<details>"
+                                f"<table>"
+                                f"<tr>"
+                                    f"<th>Key</th>"
+                                    f"<th>Value</th>"
+                                f"</tr>"
+                                f"<tr>"
+                                    f"<td>MongoDB Namespace</td>"
+                                    f"<td>{sample_log_entry['namespace']}</td>"
+                                f"</tr>"
+                                f"<tr>"
+                                    f"<td>Query Hash</td>"
+                                    f"<td>{slow_query_shape['query_hash']}</td>"
+                                f"</tr>"
+                                f"<tr>"
+                                    f"<td>Query Predicate</td>"
+                                    f"<td>{query_shape}</td>"
+                                f"</tr>"
+                                f"<tr>"
+                                    f"<td>Number Slow Logs</td>"
+                                    f"<td>{slow_query_shape['numLogs']}</td>"
+                                f"</tr>"
+                                f"<tr>"
+                                    f"<td>Avg Duration Millis</td>"
+                                    f"<td>{slow_query_shape['avgDurationMillis']}</td>"
+                                f"</tr>"
+                                f"</table>"
+                                f"<h5>Logs:</h5>"
+                                f"{log_entries_html}"
+                                f"</details>")
+
+        # Create header and general table
+        html_for_cluster = (f"<h2>Report for {cluster_data['clusterName']}</h2>"
+                f"<h3> General Data: </h3>"
+                f"<table>"
+                    f"<tr>"
+                        f"<th>Key</th>"
+                        f"<th>Value</th>"
+                    f"</tr>"
+                    f"<tr>"
+                        f"<td>Report Date</td>"
+                        f"<td>{datetime.utcnow()}</td>"
+                    f"</tr>"
+                    f"<tr>"
+                        f"<td>MDB Version</td>"
+                        f"<td>{cluster_data['mdbVersion']}</td>"
+                    f"</tr>"
+                f"</table>"
+                f"<br></br>"
+                f"<h3>Top {min(max_slow_queries, len(cluster_data['slowQueries']))} Slow Query Shapes: </h3>"
+                    f"<details><summary>Slow Queries for {cluster_data['clusterName']}</summary>"
+                        f"{slow_query_html}"
+                    f"</details>"
+                f"<br></br>"
+                f"<h3>Suggested Indexes</h3>"
+                    f"<details><summary>Suggested Indexes for {cluster_data['clusterName']}</summary>"
+                        f"{slow_query_html}"
+                    f"</details>")
+
+        html += html_for_cluster
+
+    return html
+
 def collect_perf_advisor_data_for_project(groupId, max_num_queries=1000):
     """
     Collect Perf Advisor Data for Project
@@ -75,7 +197,11 @@ def collect_perf_advisor_data_for_project(groupId, max_num_queries=1000):
     :param project:
     :return:
     """
+    project_info = atlasConnector.get_project(groupId)
+
     report_data = {
+        "projectName" : project_info["name"],
+        "projectId" : groupId,
         "clusters" : get_cluster_info_for_all_clusters(groupId)
     }
 
@@ -85,14 +211,37 @@ def collect_perf_advisor_data_for_project(groupId, max_num_queries=1000):
         for cluster in report_data["clusters"]:
             if process["userAlias"] in cluster["hosts"]:
                 cluster["slowQueries"].extend(get_slow_queries(groupId, process, None))
-                cluster["suggestedIndexes"] = get_suggested_indexes(groupId, process)
+                cluster["suggestedIndexes"].extend(get_suggested_indexes(groupId, process))
 
     for cluster in report_data["clusters"]:
-        cluster["slowQueries"] = aggregate_and_sort_queries(cluster["slowQueries"])
+        cluster["slowQueries"] = aggregate_and_sort_queries(cluster["slowQueries"], max_num_queries)
+        cluster["suggestedIndexes"] = aggregate_suggested_indexes(cluster["suggestedIndexes"])
         # sortedSlowQueries = sorted(cluster["slowQueries"], key=lambda x:x['logData']['attr']['durationMillis'], reverse=True)
         # cluster["slowQueries"] = sortedSlowQueries[0:max_num_queries]
 
     return report_data
+
+def aggregate_suggested_indexes(suggested_indexes):
+    """
+    Aggregate Suggested Indexes
+
+    :param suggested_indexes:
+    :return:
+    """
+    aggregated_indexes = {
+    }
+    for suggested_index in suggested_indexes:
+        if suggested_index["namespace"] not in aggregated_indexes:
+            aggregated_indexes[suggested_index["namespace"]] = {
+            }
+        if str(suggested_index["index"]) not in aggregated_indexes[str(suggested_index["namespace"])]:
+            aggregated_indexes[suggested_index["namespace"]][str(suggested_index["index"])] = suggested_index
+
+    indexes = []
+    for namespace in aggregated_indexes:
+        for index in aggregated_indexes[namespace]:
+            indexes.append(aggregated_indexes[namespace][index])
+    return indexes
 
 def aggregate_and_sort_queries(slow_queries, max_num_queries=None):
     """
@@ -104,7 +253,6 @@ def aggregate_and_sort_queries(slow_queries, max_num_queries=None):
     """
     aggregated_queries = {
     }
-    # sortedSlowQueries = sorted(slow_queries, key=lambda x: x['logData']['attr']['durationMillis'], reverse=True)
     for slow_query in slow_queries:
         if "queryHash" not in slow_query["logData"]["attr"]:
             logging.debug("Skipping log entry as it does not have query hash")
@@ -115,7 +263,10 @@ def aggregate_and_sort_queries(slow_queries, max_num_queries=None):
         query_hash = slow_query["logData"]["attr"]["queryHash"]
         if query_hash not in aggregated_queries:
             aggregated_queries[query_hash] = {
-                "logs" : [ slow_query ],
+                "query_hash" : query_hash,
+                "logs" : [
+                    slow_query
+                ],
                 "numLogs" : 1,
                 "avgDurationMillis" : slow_query['logData']['attr']['durationMillis']
             }
@@ -124,12 +275,16 @@ def aggregate_and_sort_queries(slow_queries, max_num_queries=None):
             numLogs = aggregated_queries[query_hash]["numLogs"]
             logs = aggregated_queries[query_hash]["logs"]
             logs.append(slow_query)
-            aggregated_queries[query_hash] = {
-                "logs" : logs,
-                "numLogs" : numLogs+1,
-                "avgDurationMillis" : (avgDurationMillis * numLogs + slow_query['logData']['attr']['durationMillis'])/(numLogs+1)
-            }
-    return aggregated_queries
+            aggregated_queries[query_hash]["logs"] = logs
+            aggregated_queries[query_hash]["numLogs"] = numLogs+1
+            aggregated_queries[query_hash]["avgDurationMillis"] = (avgDurationMillis * numLogs + slow_query['logData']['attr']['durationMillis'])/(numLogs+1)
+
+    # Get slowest query shapes
+    query_shapes = [ aggregated_queries[h] for h in aggregated_queries ]
+    sorted_query_shapes = sorted(query_shapes, key=lambda x:x["avgDurationMillis"], reverse=True)
+    if max_num_queries is not None:
+        return sorted_query_shapes[0:max_num_queries]
+    return sorted_query_shapes
 
 def get_cluster_info_for_all_clusters(group_id):
     """
@@ -181,8 +336,6 @@ def get_slow_queries(group_id, process, max_num_queries=1000):
         port = process_id_parts[1]
         slow_query["processName"] = "{}:{}".format(process["userAlias"], port)
         slow_query["logData"] = json.loads(slow_query["line"])
-
-
 
     sorted_queries = sorted(slow_queries["slowQueries"], key=lambda x:x['logData']['attr']['durationMillis'], reverse=True)
     if max_num_queries is None:
@@ -319,8 +472,8 @@ def main():
     # Get Ops Manager connection
     global atlasConnector
     atlasConnector = AtlasConnector(args.atlasApiUser, args.atlasApiKey)
-    collect_perf_advisor_data_for_project(args.atlasGroupId, 100)
-
+    report_data = collect_perf_advisor_data_for_project(args.atlasGroupId, 100)
+    create_perf_report(report_data, 100)
 
 #-------------------------------
 if __name__ == "__main__":
