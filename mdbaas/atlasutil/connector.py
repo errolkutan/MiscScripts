@@ -138,6 +138,20 @@ class AtlasConnector:
             logging.debug("Received response: {} ".format(self.prettyPrint(result)))
         return result
 
+    def construct_query_params(self, params_dict):
+        """
+        Construct Query Params
+
+        :param params_dict:
+        :return:
+        """
+        query_params = "?"
+        for key in params_dict:
+            if params_dict[key] is not None:
+                query_params += f"{key}={params_dict[key]}&"
+        query_params = query_params[0:len(query_params)-1]
+        return query_params
+
     ############################################################################
     # Project Level Endpoints
     ############################################################################
@@ -242,5 +256,47 @@ class AtlasConnector:
         return self.get(url)
 
     ############################################################################
-    # Performance Advisor
+    # Measurements Endpoint
     ############################################################################
+
+    def get_measurements_for_process_for_period(self, group_id, process_id, granularity=None, period=None):
+        """
+        Get Suggested Indexes
+
+        https://cloud.mongodb.com/api/atlas/v1.0/groups/{groupId}/processes/{processId}/measurements
+
+        :param group_id:
+        :param process_id:
+        :return:
+        """
+        url = "{}/groups/{}/processes/{}/measurements{}".format(
+            self.v1ApiURL,
+            group_id,
+            process_id,
+            self.construct_query_params({"granularity" : granularity, "period" : period})
+        )
+        return self.get(url)
+
+    def get_measurements_for_process_for_time_range(self, group_id, process_id, granularity=None, start=None, end=None):
+        """
+        Get Suggested Indexes
+
+        https://cloud.mongodb.com/api/atlas/v1.0/groups/{groupId}/processes/{processId}/measurements
+
+        :param group_id:
+        :param process_id:
+        :return:
+        """
+        if (start is None and end is None) or (start is not None and end is not None):
+            url = "{}/groups/{}/processes/{}/measurements{}".format(
+                self.v1ApiURL,
+                group_id,
+                process_id,
+                self.construct_query_params({"granularity" : granularity, "start" : start, "end" : end})
+            )
+        else:
+            raise Exception("'start' and 'end' must both be null or non-null")
+        return self.get(url)
+
+
+

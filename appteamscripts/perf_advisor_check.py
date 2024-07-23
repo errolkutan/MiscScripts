@@ -11,8 +11,9 @@ import logging
 import subprocess
 import argparse
 import json
-from prettytable import PrettyTable
 from datetime import datetime
+import matplotlib.pyplot as plt
+import numpy as np
 
 from mdbaas.atlasutil import AtlasConnector
 
@@ -99,6 +100,42 @@ def create_perf_report(report_data, max_slow_queries):
     with open(html_file_name, 'w') as f:
         f.write(html)
 
+def create_metrics_plots_for_cluster(cluster_data):
+    """
+    Create Metrics Plots
+
+    :param cluster_data:
+    :return:
+    """
+    for measurement in cluster_data["metrics"]["measurements"]:
+
+        # Plot the chart
+        x = [d["timestamp"] for d in measurement["dataPoints"]]
+        y = [d["value"] for d in measurement["dataPoints"]]
+        y = np.array(y)
+        p = plt.plot(x, y)
+
+        # Y tickers
+        plt.ylabel("{} ({})".format(measurement["name"], measurement["units"]))
+
+        # X Tickers
+        plt.xlabel("Date")
+        ax = plt.gca()
+        # num_xticks = 5
+        new_x = [ x[i] if i%100 == 0 else "" for i in range(len(x))]
+        ax.set_xticks(new_x)
+        plt.xticks(rotation=30)
+
+        plt.subplots_adjust(left=0.30)
+        plt.subplots_adjust(bottom=0.30)
+        plt.show()
+
+        # plot_file_name = "{}.{}"
+        # plt.savefig(plot_file_name)
+    # return plots
+
+
+
 def create_cluster_html_data(report_data, max_slow_queries):
     """
     Create Cluster HTML Data
@@ -108,6 +145,11 @@ def create_cluster_html_data(report_data, max_slow_queries):
     html = ""
     query_shape_num = 0
     for cluster_data in report_data["clusters"]:
+
+        # Create chart
+        plots = create_metrics_plots_for_cluster(cluster_data)
+
+
         # Index Suggestions
 
 
@@ -190,6 +232,24 @@ def create_cluster_html_data(report_data, max_slow_queries):
 
     return html
 
+def write_logs_to_file(group_id, cluster_name, logs):
+    """
+    Write Logs to File
+
+    :param group_id:
+    :param cluster_name:
+    :param logs:
+    :return:
+    """
+    file_name = "reports/logs/slowQueries.{}.{}.log".format(
+        group_id,
+        cluster_name
+    )
+    logging.info("Writing logs to file {}".format(file_name))
+    log_str = "\n".join(str(log_entry) for log_entry in logs)
+    with open(file_name, "w") as f:
+        f.write(log_str)
+
 def collect_perf_advisor_data_for_project(groupId, max_num_queries=1000):
     """
     Collect Perf Advisor Data for Project
@@ -212,6 +272,9 @@ def collect_perf_advisor_data_for_project(groupId, max_num_queries=1000):
             if process["userAlias"] in cluster["hosts"]:
                 cluster["slowQueries"].extend(get_slow_queries(groupId, process, None))
                 cluster["suggestedIndexes"].extend(get_suggested_indexes(groupId, process))
+                write_logs_to_file(groupId, process["userAlias"], cluster["slowQueries"])
+                if "REPLICA_PRIMARY" == process["typeName"]:
+                    cluster["metrics"] = get_metrics_for_process(groupId, process)
 
     for cluster in report_data["clusters"]:
         cluster["slowQueries"] = aggregate_and_sort_queries(cluster["slowQueries"], max_num_queries)
@@ -302,7 +365,8 @@ def get_cluster_info_for_all_clusters(group_id):
             "mdbVersion": cluster["mongoDBVersion"],
             "hosts": get_cluster_hosts(cluster),
             "slowQueries" : [],
-            "suggestedIndexes" : []
+            "suggestedIndexes" : [],
+            "metrics" : []
         }
         clusterData.append(clusterInfo)
     return clusterData
@@ -358,6 +422,17 @@ def get_suggested_indexes(group_id, process):
         print("{}".format(suggested_index))
     return suggested_indexes["suggestedIndexes"]
 
+
+def get_metrics_for_process(group_id, process):
+    """
+    Get Metrics for Process
+
+    :param group_id:
+    :param process:
+    :return:
+    """
+    metrics = atlasConnector.get_measurements_for_process_for_period(group_id, process["id"], granularity="PT1M", period="P2D")
+    return metrics
 
 def checkOsCompatibility():
     """
