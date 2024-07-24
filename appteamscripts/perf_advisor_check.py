@@ -2,6 +2,7 @@
 import operator
 import platform
 import sys
+from PIL import Image
 
 import requests
 
@@ -109,11 +110,39 @@ def create_metrics_plots_for_cluster(cluster_data):
     """
     for measurement in cluster_data["metrics"]["measurements"]:
 
+        if measurement["name"] not in [
+            "CACHE_BYTES_READ_INTO",
+            "CACHE_BYTES_WRITTEN_FROM",
+            "CACHE_DIRTY_BYTES",
+            "CACHE_USED_BYTES",
+            "TICKETS_AVAILABLE_READS",
+            "TICKETS_AVAILABLE_WRITE",
+            "CONNECTIONS",
+            "OPLOG_REPLICATION_LAG_TIME",
+            "OPLOG_RATE_GB_PER_HOUR",
+            "DB_STORAGE_TOTAL",
+            "DB_INDEX_SIZE_TOTAL",
+            "DB_DATA_SIZE_TOTAL",
+            "QUERY_EXECUTOR_SCANNED",
+            "QUERY_EXECUTOR_SCANNED_OBJECTS",
+            "QUERY_TARGETING_SCANNED_PER_RETURNED",
+            "QUERY_TARGETING_SCANNED_OBJECTS_PER_RETURNED"
+            # "CACHE_BYTES_READ_INTO",
+            # "CACHE_BYTES_READ_INTO",
+            # "CACHE_BYTES_READ_INTO",
+            # "CACHE_BYTES_READ_INTO",
+        ]:
+            logging.info("Skipping metric {}".format(measurement["name"]))
+            continue
+
+        logging.info("Creating plot for metric {}".format(measurement["name"]))
+
         # Plot the chart
-        x = [d["timestamp"] for d in measurement["dataPoints"]]
-        y = [d["value"] for d in measurement["dataPoints"]]
+        # x = [d["timestamp"] for d in measurement["dataPoints"]]
+        x = [datetime.strptime(d["timestamp"], "%Y-%m-%dT%H:%M:%SZ") for d in measurement["dataPoints"]]
+        y = [(0.0 if d["value"] is None else d["value"]) for d in measurement["dataPoints"]]
         y = np.array(y)
-        p = plt.plot(x, y)
+        plt.plot(x, y)
 
         # Y tickers
         plt.ylabel("{} ({})".format(measurement["name"], measurement["units"]))
@@ -122,18 +151,28 @@ def create_metrics_plots_for_cluster(cluster_data):
         plt.xlabel("Date")
         ax = plt.gca()
         # num_xticks = 5
-        new_x = [ x[i] if i%100 == 0 else "" for i in range(len(x))]
-        ax.set_xticks(new_x)
+        # new_x = [ x[i] if i%1000 == 0 else "" for i in range(len(x))]
+        # ax.set_xticks(new_x)
         plt.xticks(rotation=30)
 
         plt.subplots_adjust(left=0.30)
         plt.subplots_adjust(bottom=0.30)
         plt.show()
 
-        # plot_file_name = "{}.{}"
-        # plt.savefig(plot_file_name)
-    # return plots
+        # fig = plt.figure()
+        # im = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
 
+        # data = np.random.random((100, 100))
+        # wh = fig.canvas.get_width_height()
+        # data = np.random.random(wh)
+        # cm = plt.get_cmap('viridis')
+        # im = Image.fromarray((cm(data)[:, :, :3] * 255).astype(np.uint8))
+
+        plot_file_name = f"reports/plots/{cluster_data['clusterName']}.{measurement['name']}.png"
+        # im.save(plot_file_name)
+        plt.savefig(plot_file_name)
+        plt.close()
+    # return plots
 
 
 def create_cluster_html_data(report_data, max_slow_queries):
