@@ -13,7 +13,7 @@ import subprocess
 import argparse
 import json
 from datetime import datetime
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 
 from mdbaas.atlasutil import AtlasConnector
@@ -110,7 +110,7 @@ def create_metrics_plots_for_cluster(cluster_data):
     """
     n_rows = 4
     n_cols = 4
-    fig, axes = plt.subplots(n_rows, n_cols)
+    # fig, axes = plt.subplots(n_rows, n_cols)
 
     row = 0
     col = 0
@@ -149,26 +149,31 @@ def create_metrics_plots_for_cluster(cluster_data):
         x = [datetime.strptime(d["timestamp"], "%Y-%m-%dT%H:%M:%SZ") for d in measurement["dataPoints"]]
         y = clean_data(measurement["dataPoints"], "value")
         y = np.array(y)
-        axes[row][col].plot(x, y, markersize=1)
+        # axes[row][col].plot(x, y, markersize=1)
         # plt.scatter(x, y, s=1)
+
         # axes[row][col].ylim((y.min(), y.max()))
 
         # Y tickers
         # axes[row][col].ylabel("{} \n({})".format(measurement["name"], measurement["units"]))
-        axes[row][col].set_ylabel("{} \n({})".format(measurement["name"], measurement["units"]))
+
+        # axes[row][col].set_ylabel("{} \n({})".format(measurement["name"], measurement["units"]))
 
         # X Tickers
         # axes[row][col].xlabel("Date")
-        axes[row][col].set_xlabel("Date")
+
+        # TODO uncomment
+        # axes[row][col].set_xlabel("Date")
+
         # axes[row][col].xticks(rotation=30)
 
         # axes[row][col].subplots_adjust(left=0.30)
         # axes[row][col].subplots_adjust(bottom=0.40)
 
-        plt.show()
-        plot_file_name = f"reports/plots/{cluster_data['clusterName']}.{measurement['name']}.png"
-        plt.savefig(plot_file_name)
-        plt.close()
+        # plt.show()
+        # plot_file_name = f"reports/plots/{cluster_data['clusterName']}.{measurement['name']}.png"
+        # plt.savefig(plot_file_name)
+        # plt.close()
 
         row += 1
         row = row % n_rows
@@ -203,7 +208,7 @@ def create_cluster_html_data(report_data, max_slow_queries):
     for cluster_data in report_data["clusters"]:
 
         # Create chart
-        plots = create_metrics_plots_for_cluster(cluster_data)
+        # plots = create_metrics_plots_for_cluster(cluster_data)
 
 
         # Index Suggestions
