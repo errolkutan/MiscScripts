@@ -2,11 +2,12 @@
 import operator
 import platform
 import sys
-from PIL import Image
+# from PIL import Image
 
 import requests
 
 sys.path.append('../appteamscripts')
+sys.path.append('.')
 import os
 import logging
 import subprocess
@@ -302,7 +303,11 @@ def write_logs_to_file(group_id, cluster_name, logs):
     :param logs:
     :return:
     """
-    file_name = "reports/logs/slowQueries.{}.{}.log".format(
+    dir_prefix = "reports2/logs"
+    if not os.path.exists(dir_prefix):
+        os.makedirs(dir_prefix)
+    file_name = "{}/slowQueries.{}.{}.log".format(
+        dir_prefix,
         group_id,
         cluster_name
     )
