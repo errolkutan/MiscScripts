@@ -108,6 +108,13 @@ def create_metrics_plots_for_cluster(cluster_data):
     :param cluster_data:
     :return:
     """
+    n_rows = 4
+    n_cols = 4
+    fig, axes = plt.subplots(n_rows, n_cols)
+
+    row = 0
+    col = 0
+
     for measurement in cluster_data["metrics"]["measurements"]:
 
         if measurement["name"] not in [
@@ -140,40 +147,50 @@ def create_metrics_plots_for_cluster(cluster_data):
         # Plot the chart
         # x = [d["timestamp"] for d in measurement["dataPoints"]]
         x = [datetime.strptime(d["timestamp"], "%Y-%m-%dT%H:%M:%SZ") for d in measurement["dataPoints"]]
-        y = [(0.0 if d["value"] is None else d["value"]) for d in measurement["dataPoints"]]
+        y = clean_data(measurement["dataPoints"], "value")
         y = np.array(y)
-        plt.plot(x, y)
+        axes[row][col].plot(x, y, markersize=1)
+        # plt.scatter(x, y, s=1)
+        # axes[row][col].ylim((y.min(), y.max()))
 
         # Y tickers
-        plt.ylabel("{} ({})".format(measurement["name"], measurement["units"]))
+        # axes[row][col].ylabel("{} \n({})".format(measurement["name"], measurement["units"]))
+        axes[row][col].set_ylabel("{} \n({})".format(measurement["name"], measurement["units"]))
 
         # X Tickers
-        plt.xlabel("Date")
-        ax = plt.gca()
-        # num_xticks = 5
-        # new_x = [ x[i] if i%1000 == 0 else "" for i in range(len(x))]
-        # ax.set_xticks(new_x)
-        plt.xticks(rotation=30)
+        # axes[row][col].xlabel("Date")
+        axes[row][col].set_xlabel("Date")
+        # axes[row][col].xticks(rotation=30)
 
-        plt.subplots_adjust(left=0.30)
-        plt.subplots_adjust(bottom=0.30)
+        # axes[row][col].subplots_adjust(left=0.30)
+        # axes[row][col].subplots_adjust(bottom=0.40)
+
         plt.show()
-
-        # fig = plt.figure()
-        # im = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
-
-        # data = np.random.random((100, 100))
-        # wh = fig.canvas.get_width_height()
-        # data = np.random.random(wh)
-        # cm = plt.get_cmap('viridis')
-        # im = Image.fromarray((cm(data)[:, :, :3] * 255).astype(np.uint8))
-
         plot_file_name = f"reports/plots/{cluster_data['clusterName']}.{measurement['name']}.png"
-        # im.save(plot_file_name)
         plt.savefig(plot_file_name)
         plt.close()
+
+        row += 1
+        row = row % n_rows
+
+        col += 1
+        col = col % n_cols
+
     # return plots
 
+def clean_data(data, key):
+    """
+    Clean Data
+
+    :param data:
+    :return:
+    """
+    last = 0.0
+    for d in data:
+        if d[key] is None:
+            d[key] = last
+        last = d[key]
+    return [ d[key] for d in data]
 
 def create_cluster_html_data(report_data, max_slow_queries):
     """
