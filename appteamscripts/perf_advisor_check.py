@@ -67,6 +67,8 @@ SCALE_MAP = {
 SECONDS_IN_HOUR = 60*60
 APPLICATION_ENVS = [ "PROD", "UAT", "DEV"]
 
+MAX_NUM_LOG_ENTRIES_PER_SHAPE = 5
+
 
 ########################################################################################################################
 # Base Methods
@@ -198,12 +200,63 @@ def clean_data(data, key):
         last = d[key]
     return [ d[key] for d in data]
 
+def create_slow_query_html(slow_query_shape, query_shape_num):
+    """
+    Create Slow Query HTML
+
+    :param slow_query_shape:
+    :param query_shape_num:
+    :return:
+    """
+    log_entries_html = ""
+    for log_entry in slow_query_shape["logs"][0:MAX_NUM_LOG_ENTRIES_PER_SHAPE]:
+        log_entries_html += (f"<p>{str(log_entry)}</p>"
+                             f"<br></br>")
+        sample_log_entry = log_entry
+
+    log_entries_html += (f"<br></br>"
+                         f"<span style='white-space: pre-line'></span>")
+
+
+    query_shape = sample_log_entry['logData']['attr']['command']['filter']
+    val = (f"<h4>Query Shape {query_shape_num}: {query_shape}</h4>"
+                                    f"<details>"
+                                    f"<table>"
+                                    f"<tr>"
+                                        f"<th>Key</th>"
+                                        f"<th>Value</th>"
+                                    f"</tr>"
+                                    f"<tr>"
+                                        f"<td>MongoDB Namespace</td>"
+                                        f"<td>{sample_log_entry['namespace']}</td>"
+                                    f"</tr>"
+                                    f"<tr>"
+                                        f"<td>Query Hash</td>"
+                                        f"<td>{slow_query_shape['query_hash']}</td>"
+                                    f"</tr>"
+                                    f"<tr>"
+                                        f"<td>Query Predicate</td>"
+                                        f"<td>{query_shape}</td>"
+                                    f"</tr>"
+                                    f"<tr>"
+                                        f"<td>Number Slow Logs</td>"
+                                        f"<td>{slow_query_shape['numLogs']}</td>"
+                                    f"</tr>"
+                                    f"<tr>"
+                                        f"<td>Avg Duration Millis</td>"
+                                        f"<td>{slow_query_shape['avgDurationMillis']}</td>"
+                                    f"</tr>"
+                                    f"</table>"
+                                    f"<h5>Logs:</h5>"
+                                    f"{log_entries_html}"
+                                    f"</details>")
+    return val
+
 def create_cluster_html_data(report_data, max_slow_queries):
     """
     Create Cluster HTML Data
     :return:
     """
-    MAX_NUM_LOG_ENTRIES_PER_SHAPE = 5
     html = ""
     query_shape_num = 0
     for cluster_data in report_data["clusters"]:
@@ -214,53 +267,16 @@ def create_cluster_html_data(report_data, max_slow_queries):
 
         # Index Suggestions
 
-
         # Slow queries
         sample_log_entry = None
         slow_query_html = ""
         for slow_query_shape in cluster_data["slowQueries"]:
-            log_entries_html = ""
-            for log_entry in slow_query_shape["logs"][0:MAX_NUM_LOG_ENTRIES_PER_SHAPE]:
-                log_entries_html += (f"<p>{str(log_entry)}</p>"
-                                     f"<br></br>")
-                sample_log_entry = log_entry
-
-            log_entries_html += (f"<br></br>"
-                                f"<span style='white-space: pre-line'></span>")
-
-            query_shape_num += 1
-            query_shape = sample_log_entry['logData']['attr']['command']['filter']
-            slow_query_html += (f"<h4>Query Shape {query_shape_num}: {query_shape}</h4>"
-                                f"<details>"
-                                f"<table>"
-                                f"<tr>"
-                                    f"<th>Key</th>"
-                                    f"<th>Value</th>"
-                                f"</tr>"
-                                f"<tr>"
-                                    f"<td>MongoDB Namespace</td>"
-                                    f"<td>{sample_log_entry['namespace']}</td>"
-                                f"</tr>"
-                                f"<tr>"
-                                    f"<td>Query Hash</td>"
-                                    f"<td>{slow_query_shape['query_hash']}</td>"
-                                f"</tr>"
-                                f"<tr>"
-                                    f"<td>Query Predicate</td>"
-                                    f"<td>{query_shape}</td>"
-                                f"</tr>"
-                                f"<tr>"
-                                    f"<td>Number Slow Logs</td>"
-                                    f"<td>{slow_query_shape['numLogs']}</td>"
-                                f"</tr>"
-                                f"<tr>"
-                                    f"<td>Avg Duration Millis</td>"
-                                    f"<td>{slow_query_shape['avgDurationMillis']}</td>"
-                                f"</tr>"
-                                f"</table>"
-                                f"<h5>Logs:</h5>"
-                                f"{log_entries_html}"
-                                f"</details>")
+            try:
+                query_shape_num += 1
+                slow_query_html += create_slow_query_html(slow_query_shape, query_shape_num)
+            except Exception as e:
+                logging.error("Encountered error when attempting to build slow query html")
+                logging.error(e)
 
         # Create header and general table
         html_for_cluster = (f"<h2>Report for {cluster_data['clusterName']}</h2>"
@@ -303,7 +319,7 @@ def write_logs_to_file(group_id, cluster_name, logs):
     :param logs:
     :return:
     """
-    dir_prefix = "reports2/logs"
+    dir_prefix = "reports/logs"
     if not os.path.exists(dir_prefix):
         os.makedirs(dir_prefix)
     file_name = "{}/slowQueries.{}.{}.log".format(
