@@ -200,6 +200,15 @@ def clean_data(data, key):
         last = d[key]
     return [ d[key] for d in data]
 
+def create_index_suggestion_html(index_suggestion):
+    """
+    Create Index Suggestion HTML
+
+    :return:
+    """
+
+
+
 def create_slow_query_html(slow_query_shape, query_shape_num):
     """
     Create Slow Query HTML
@@ -266,6 +275,25 @@ def create_cluster_html_data(report_data, max_slow_queries):
 
 
         # Index Suggestions
+        suggested_index_table_rows = ""
+        for index_suggestion in cluster_data["suggestedIndexes"]:
+            # index_suggestions_html += create_index_suggestion_html(index_suggestion)
+
+            index = {}
+            for index_field in reversed(index_suggestion["index"]):
+                index = index | index_field
+
+            suggested_index_table_rows += (f"<tr>"
+                                                f"<td>{index_suggestion['namespace']}</td>"
+                                                f"<td>{index}</td>"
+                                            f"</tr>")
+        index_suggestions_html = (f"<table>"
+                                  f"<tr>"
+                                  f"<th>MDB Namespace</th>"
+                                  f"<th>Index</th>"
+                                  f"</tr>"
+                                  f"{suggested_index_table_rows}"
+                                  "</table>")
 
         # Slow queries
         sample_log_entry = None
@@ -303,7 +331,7 @@ def create_cluster_html_data(report_data, max_slow_queries):
                 f"<br></br>"
                 f"<h3>Suggested Indexes</h3>"
                     f"<details><summary>Suggested Indexes for {cluster_data['clusterName']}</summary>"
-                        f"{slow_query_html}"
+                        f"{index_suggestions_html}"
                     f"</details>")
 
         html += html_for_cluster
