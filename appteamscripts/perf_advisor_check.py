@@ -281,7 +281,8 @@ def create_cluster_html_data(report_data, max_slow_queries):
 
             index = {}
             for index_field in reversed(index_suggestion["index"]):
-                index = index | index_field
+                index = index.update(index_field)
+
 
             suggested_index_table_rows += (f"<tr>"
                                                 f"<td>{index_suggestion['namespace']}</td>"
